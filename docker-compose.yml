@@ -15,9 +15,13 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: django_api
-    command: python manage.py runserver 0.0.0.0:8000
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app
     ports:
@@ -25,15 +29,20 @@ services:
     depends_on:
       - db
     environment:
-      - POSTGRES_DB=stockdb
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin12345
-      - POSTGRES_HOST=db
+      POSTGRES_DB: stockdb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin12345
+      POSTGRES_HOST: db
+      DJANGO_SETTINGS_MODULE: stock_api.settings
+    restart: always
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: vue_frontend
     command: npm run dev
+    working_dir: /app
     volumes:
       - ./frontend:/app
       - /app/node_modules 
@@ -45,5 +54,7 @@ services:
       - NODE_ENV=development
     depends_on:
       - backend
+    restart: always
+
 volumes:
   postgres_data:
