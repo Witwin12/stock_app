@@ -7,6 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # ติดตั้ง dependencies
+RUN npm install
 
 # คัดลอกไฟล์ทั้งหมดเข้ามา
 COPY . .
