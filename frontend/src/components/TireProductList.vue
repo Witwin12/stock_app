@@ -2,36 +2,29 @@
 // (1) Import เครื่องมือที่จำเป็น
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+// *** ไม่ต้อง Import อะไรเพิ่มสำหรับ <router-link> ***
 
 // (2) สร้าง "State" (กล่องเปล่า) สำหรับเก็บข้อมูล
-// ref() ทำให้ตัวแปรนี้ "Reactive" (ถ้าข้อมูลเปลี่ยน HTML จะอัปเดตตาม)
 const products = ref([])
 const loading = ref(true)
 const error = ref(null)
 
-// (3) สร้าง Function สำหรับดึงข้อมูล
-// เราจะใช้ `async/await` เพื่อให้โค้ดอ่านง่าย
+// (3) สร้าง Function สำหรับดึงข้อมูล (เหมือนเดิม)
 async function fetchTireProducts() {
   loading.value = true
   try {
-    // (4) ยิง Request ไปยัง Backend (นี่คือ URL ที่เราสร้างใน urls.py)
     const response = await axios.get('http://localhost:8000/api/tire-products/')
-    
-    // (5) เอาข้อมูล (response.data) มาใส่ใน "State"
     products.value = response.data
     
   } catch (err) {
-    // (6) จัดการ Error
     console.error('Error fetching data:', err)
     error.value = 'ไม่สามารถโหลดข้อมูลได้'
   } finally {
-    // (7) ไม่ว่าจะสำเร็จหรือล่ม ให้หยุด Loading
     loading.value = false
   }
 }
 
-// (8) สั่งให้ Function นี้ทำงาน "อัตโนมัติ" 
-// เมื่อ Component ถูกสร้างขึ้น (Mounted)
+// (8) สั่งให้ Function นี้ทำงาน (เหมือนเดิม)
 onMounted(() => {
   fetchTireProducts()
 })
@@ -45,7 +38,6 @@ onMounted(() => {
     <div v-if="loading">
       กำลังโหลดข้อมูล...
     </div>
-
     <div v-else-if="error" class="error">
       {{ error }}
     </div>
@@ -54,9 +46,11 @@ onMounted(() => {
       <thead>
         <tr>
           <th>ยี่ห้อ</th>
-          <th>รุ่น</th>
+          <th>ลายดอกยาง</th>
           <th>ขนาด</th>
           <th>ยอดคงเหลือรวม (เส้น)</th>
+          
+          <th>รายละเอียด</th>
         </tr>
       </thead>
       <tbody>
@@ -65,6 +59,15 @@ onMounted(() => {
           <td>{{ product.pattern }}</td>
           <td>{{ product.size }}</td>
           <td>{{ product.total_stock_on_hand }}</td>
+          
+          <td>
+            <router-link 
+              :to="`/product/${product.product_id}`" 
+              class="detail-button"
+            >
+              ดูสต็อก
+            </router-link>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -82,23 +85,20 @@ onMounted(() => {
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
   color: #222;
 }
-
+/* (Style อื่นๆ เหมือนเดิม) */
 h1 {
   text-align: center;
   margin-bottom: 20px;
 }
-
 .error {
   color: red;
   text-align: center;
 }
-
 .stock-table {
   width: 100%;
   border-collapse: collapse;
   background-color: #fff;
 }
-
 .stock-table th {
   background-color: #f5f5f5;
   color: #333;
@@ -106,13 +106,33 @@ h1 {
   padding: 10px;
   border-bottom: 2px solid #ddd;
 }
-
 .stock-table td {
   padding: 10px;
   border-bottom: 1px solid #eee;
+  /* (ทางเลือก) จัดให้ปุ่มอยู่ตรงกลาง Cell */
+  vertical-align: middle;
+  text-align: center;
 }
-
 .stock-table tr:hover {
   background-color: #f9f9f9;
+}
+
+/* (4) เพิ่ม Style สำหรับปุ่มลิงก์ */
+.detail-button {
+  display: inline-block;
+  background-color: #007bff; /* สีฟ้า */
+  color: white;
+  padding: 6px 12px;
+  text-align: center;
+  text-decoration: none; /* ลบขีดเส้นใต้ของลิงก์ */
+  border-radius: 4px;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+  white-space: nowrap; /* กันไม่ให้ปุ่มตกบรรทัด */
+}
+
+.detail-button:hover {
+  background-color: #0056b3; /* สีฟ้าเข้มขึ้น */
+  color: white;
 }
 </style>
