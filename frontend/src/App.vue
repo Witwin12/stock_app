@@ -1,24 +1,18 @@
 <script setup>
-// 1. Import Component ที่เราสร้าง
-import TireProductList from './components/TireProductList.vue'
+// (ในอนาคต เราอาจจะ import Navbar มาไว้ที่นี่)
+// import NavBar from './components/NavBar.vue'
 </script>
 
 <template>
   <main>
-    <TireProductList />
+    <router-view />
   </main>
-
-</template>
-
-<style>
-html, body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  background-color: white;
   
-}
+  </template>
 
+<style scoped>
+/* Style ในนี้คือ Style ที่ใช้ "ร่วมกันทุกหน้า" 
+*/
 main {
   width: 100%;
   height: 100%;
