@@ -1,47 +1,43 @@
 <script setup>
-// (1) Import เครื่องมือที่จำเป็น
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-// *** ไม่ต้อง Import อะไรเพิ่มสำหรับ <router-link> ***
 
-// (2) สร้าง "State" (กล่องเปล่า) สำหรับเก็บข้อมูล
+// ====== STATE ======
 const products = ref([])
 const loading = ref(true)
 const error = ref(null)
 
-// (3) สร้าง Function สำหรับดึงข้อมูล (เหมือนเดิม)
+// ====== API CALL ======
 async function fetchTireProducts() {
   loading.value = true
+  error.value = null
+
   try {
-    const response = await axios.get('http://localhost:8000/api/tire-products/')
-    products.value = response.data
-    
+    const { data } = await axios.get('http://localhost:8000/api/tire-products/')
+    products.value = data
   } catch (err) {
-    console.error('Error fetching data:', err)
+    console.error('Error fetching products:', err)
     error.value = 'ไม่สามารถโหลดข้อมูลได้'
   } finally {
     loading.value = false
   }
 }
 
-// (8) สั่งให้ Function นี้ทำงาน (เหมือนเดิม)
-onMounted(() => {
-  fetchTireProducts()
-})
-
+// ====== LIFECYCLE ======
+onMounted(fetchTireProducts)
 </script>
 
 <template>
-  <div class="product-list">
+  <div class="product-list-container">
     <h1>รายการสต็อกยาง</h1>
 
-    <div v-if="loading">
-      กำลังโหลดข้อมูล...
-    </div>
-    <div v-else-if="error" class="error">
-      {{ error }}
-    </div>
+    <!-- Loading -->
+    <div v-if="loading">กำลังโหลดข้อมูล...</div>
 
+    <!-- Error -->
+    <div v-else-if="error" class="error-message">{{ error }}</div>
+
+    <!-- Table -->
     <table v-else class="stock-table">
       <thead>
         <tr>
@@ -49,7 +45,6 @@ onMounted(() => {
           <th>ลายดอกยาง</th>
           <th>ขนาด</th>
           <th>ยอดคงเหลือรวม (เส้น)</th>
-          
           <th>รายละเอียด</th>
         </tr>
       </thead>
@@ -58,11 +53,10 @@ onMounted(() => {
           <td>{{ product.brand }}</td>
           <td>{{ product.pattern }}</td>
           <td>{{ product.size }}</td>
-          <td>{{ product.total_stock_on_hand }}</td>
-          
+          <td class="right">{{ product.total_stock_on_hand }}</td>
           <td>
             <router-link 
-              :to="`/product/${product.product_id}`" 
+              :to="`/product/${product.product_id}`"
               class="detail-button"
             >
               ดูสต็อก
@@ -75,64 +69,77 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.product-list {
+.product-list-container {
   font-family: sans-serif;
-  max-width: 800px;
-  margin: 20px auto;
-  background-color: #ffffff;
-  padding: 20px;
+  max-width: 900px;
+  margin: 30px auto;
+  background-color: #fff;
+  padding: 24px;
   border-radius: 10px;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
   color: #222;
 }
-/* (Style อื่นๆ เหมือนเดิม) */
+
+/* Header */
 h1 {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  font-size: 1.8em;
 }
-.error {
+
+/* Error */
+.error-message {
   color: red;
   text-align: center;
+  font-weight: bold;
+  margin-top: 10px;
 }
+
+/* Table */
 .stock-table {
   width: 100%;
   border-collapse: collapse;
-  background-color: #fff;
+  font-size: 0.95em;
 }
+
 .stock-table th {
   background-color: #f5f5f5;
   color: #333;
   text-align: left;
-  padding: 10px;
+  padding: 12px;
   border-bottom: 2px solid #ddd;
 }
+
 .stock-table td {
-  padding: 10px;
+  padding: 12px;
   border-bottom: 1px solid #eee;
-  /* (ทางเลือก) จัดให้ปุ่มอยู่ตรงกลาง Cell */
   vertical-align: middle;
   text-align: center;
 }
+
 .stock-table tr:hover {
-  background-color: #f9f9f9;
+  background-color: #fafafa;
 }
 
-/* (4) เพิ่ม Style สำหรับปุ่มลิงก์ */
+td.right {
+  text-align: right;
+}
+
+/* Button */
 .detail-button {
   display: inline-block;
-  background-color: #007bff; /* สีฟ้า */
-  color: white;
+  background-color: #007bff;
+  color: #fff;
   padding: 6px 12px;
-  text-align: center;
-  text-decoration: none; /* ลบขีดเส้นใต้ของลิงก์ */
-  border-radius: 4px;
+  text-decoration: none;
+  border-radius: 5px;
   font-size: 0.9em;
-  transition: background-color 0.2s;
-  white-space: nowrap; /* กันไม่ให้ปุ่มตกบรรทัด */
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
 }
 
 .detail-button:hover {
-  background-color: #0056b3; /* สีฟ้าเข้มขึ้น */
-  color: white;
+  background-color: #0056b3;
+  color: #fff;
 }
 </style>
