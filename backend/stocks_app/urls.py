@@ -2,6 +2,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views.tire_product import TireProductViewSet
 from .views.tire_lot import TireLotInAPIView
+from .views.lot_out import StockOutCreateAPIView
+
 # 1. สร้าง Router
 router = DefaultRouter()
 
@@ -13,5 +15,6 @@ router.register(r'tire-products', TireProductViewSet, basename='tireproduct')
 urlpatterns = [
     path('', include(router.urls)),
     path('stock-in/', TireLotInAPIView.as_view(), name='api-stock-in'),
-    
+    path('stock-out/',StockOutCreateAPIView.as_view(), name='api-stock-out' )
+
 ]
