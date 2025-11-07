@@ -1,153 +1,112 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router' 
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
-// 2. สร้าง Refs สำหรับ v-model
-// --- Product Fields ---
-const brand = ref('')
-const pattern = ref('')
-const size = ref('')
+const router = useRouter()
 
-// --- (แก้ไข) 1. เก็บค่าเริ่มต้นไว้เปรียบเทียบ ---
-const defaultYear = new Date().getFullYear()
-const defaultDate = new Date().toISOString().split('T')[0]
-const defaultQuantity = 1
+// --- Defaults ---
+const defaults = {
+  brand: '',
+  pattern: '',
+  size: '',
+  year: new Date().getFullYear(),
+  date: new Date().toISOString().split('T')[0],
+  quantity: 1
+}
 
-// --- Lot Fields ---
-const year_manufactured = ref(defaultYear) 
-const date_in = ref(defaultDate) 
-const quantity_in = ref(defaultQuantity) 
+// --- Form State ---
+const brand = ref(defaults.brand)
+const pattern = ref(defaults.pattern)
+const size = ref(defaults.size)
+const year_manufactured = ref(defaults.year)
+const date_in = ref(defaults.date)
+const quantity_in = ref(defaults.quantity)
 
-// 3. สร้าง state สำหรับการโหลดและ error
 const isLoading = ref(false)
 const errorMessage = ref(null)
 
-// 4. Import Router สำหรับการนำทาง
-const router = useRouter()
+// --- Submit Handler ---
+async function addNewProduct() {
+  if (quantity_in.value <= 0)
+    return (errorMessage.value = 'จำนวนรับเข้าต้องมากกว่า 0')
 
-// 5. เขียนฟังก์ชัน 'เพิ่มสินค้า' (โค้ดเดิม)
-async function add_new_product() {
-// ตรวจสอบค่าเบื้องต้น
- if (quantity_in.value <= 0) {
- errorMessage.value = 'จำนวนรับเข้าต้องมากกว่า 0'
-  return
- }
- 
- isLoading.value = true
- errorMessage.value = null
-
- const payload = {
-  brand: brand.value,
-  pattern: pattern.value,
-  size: size.value,
-  year_manufactured: parseInt(year_manufactured.value),
-  date_in: date_in.value,
-  quantity_in: parseInt(quantity_in.value)
- }
-
- try {
-  await axios.post('http://localhost:8000/api/stock-in/', payload)
-  
-  alert('เพิ่มสินค้าและล็อตใหม่สำเร็จ!')
-  router.push('/') 
-
- } catch (error) {
-  console.error('Error adding product:', error)
-  if (error.response && error.response.data) {
-   errorMessage.value = JSON.stringify(error.response.data)
-  } else {
-   errorMessage.value = 'เกิดข้อผิดพลาด ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้'
+  const payload = {
+    brand: brand.value,
+    pattern: pattern.value,
+    size: size.value,
+    year_manufactured: +year_manufactured.value,
+    date_in: date_in.value,
+    quantity_in: +quantity_in.value
   }
- } finally {
-  isLoading.value = false
- }
+
+  try {
+    isLoading.value = true
+    await axios.post('http://localhost:8000/api/stock-in/', payload)
+    alert('เพิ่มสินค้าเรียบร้อย!')
+    router.push('/')
+  } catch (error) {
+    console.error(error)
+    errorMessage.value = error.response?.data
+      ? JSON.stringify(error.response.data)
+      : 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์'
+  } finally {
+    isLoading.value = false
+  }
 }
 
-// 10. (แก้ไข) ฟังก์ชันสำหรับปุ่ม "ย้อนกลับ"
+// --- Back Button ---
 function goBackHome() {
-  
-  // --- 2. ตรวจสอบว่าฟอร์มมีการแก้ไขหรือไม่ (Is Dirty?) ---
-  const isDirty = brand.value !== '' ||
-                  pattern.value !== '' ||
-                  size.value !== '' ||
-                  year_manufactured.value !== defaultYear ||
-                  date_in.value !== defaultDate ||
-                  quantity_in.value !== defaultQuantity;
+  const isDirty =
+    brand.value ||
+    pattern.value ||
+    size.value ||
+    year_manufactured.value !== defaults.year ||
+    date_in.value !== defaults.date ||
+    quantity_in.value !== defaults.quantity
 
-  if (isDirty) {
-    // --- 3. ถ้ามีการแก้ไข ให้ถามยืนยัน ---
-    const confirmed = confirm(
-      'คุณมีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก คุณแน่ใจหรือไม่ว่าต้องการออกจากหน้านี้?'
-    );
-    
-    // ถ้าผู้ใช้กดยืนยัน (OK) ถึงจะกลับไป
-    if (confirmed) {
-      router.push('/');
-    }
-    // ถ้ากด Cancel ก็ไม่ต้องทำอะไร
-  } else {
-    // --- 4. ถ้าฟอร์มสะอาด ไม่ต้องถาม ---
-    router.push('/');
-  }
+  if (!isDirty || confirm('คุณแน่ใจหรือไม่ว่าจะออกโดยไม่บันทึก?'))
+    router.push('/')
 }
 </script>
 
 <template>
   <main class="stock-in-form-container">
-    
     <div class="form-header">
-      <button @click="goBackHome" class="back-button">
-        &larr; กลับหน้าหลัก
-      </button>
+      <button @click="goBackHome" class="back-button">&larr; กลับหน้าหลัก</button>
       <h1>เพิ่มสินค้าเข้าสต็อก (Stock-In)</h1>
     </div>
 
-    <div v-if="errorMessage" class="error-message">
-      <strong>Error:</strong> {{ errorMessage }}
-    </div>
+    <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
-    <form @submit.prevent="add_new_product" class="stock-in-form">
-
+    <form @submit.prevent="addNewProduct" class="stock-in-form">
       <fieldset>
-        <legend>ข้อมูลสินค้า (Product Info)</legend>
-        <div class="form-group">
-          <label for="brand">ยี่ห้อ (Brand)</label>
-          <input id="brand" v-model="brand" type="text" placeholder="เช่น Michelin" required>
-        </div>
-        <div class="form-group">
-          <label for="pattern">ลายดอกยาง (Pattern)</label>
-          <input id="pattern" v-model="pattern" type="text" placeholder="เช่น Pilot Sport 5" required>
-        </div>
-        <div class="form-group">
-          <label for="size">ขนาด (Size)</label>
-          <input id="size" v-model="size" type="text" placeholder="เช่น 225/45R18" required>
-        </div>
+        <legend>ข้อมูลสินค้า</legend>
+        <div class="form-group"><label>ยี่ห้อ</label><input v-model="brand" required /></div>
+        <div class="form-group"><label>ลายดอกยาง</label><input v-model="pattern" required /></div>
+        <div class="form-group"><label>ขนาด</label><input v-model="size" required /></div>
       </fieldset>
 
       <fieldset>
-        <legend>ข้อมูลล็อต (Lot Info)</legend>
+        <legend>ข้อมูลล็อต</legend>
         <div class="form-group">
-          <label for="year">ปีที่ผลิต (Year)</label>
-          <input id="year" v-model.number="year_manufactured" type="number" min="2000" :max="new Date().getFullYear() + 1" required>
+          <label>ปีที่ผลิต</label>
+          <input v-model.number="year_manufactured" type="number" min="2000" :max="new Date().getFullYear() + 1" required />
         </div>
         <div class="form-group">
-          <label for="date_in">วันที่รับเข้า (Date In)</label>
-          <input id="date_in" v-model="date_in" type="date" required>
+          <label>วันที่รับเข้า</label>
+          <input v-model="date_in" type="date" required />
         </div>
         <div class="form-group">
-          <label for="quantity">จำนวนรับเข้า (Quantity)</label>
-          <input id="quantity" v-model.number="quantity_in" type="number" min="1" required>
+          <label>จำนวนรับเข้า</label>
+          <input v-model.number="quantity_in" type="number" min="1" required />
         </div>
       </fieldset>
 
       <button type="submit" class="submit-button" :disabled="isLoading">
         {{ isLoading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล' }}
       </button>
-
-        <button type="button" @click="goBackHome">
-          ย้อนกลับ
-        </button>
+      <button type="button" @click="goBackHome">ย้อนกลับ</button>
     </form>
   </main>
 </template>

@@ -1,67 +1,50 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-// (เพิ่ม) 1. Import RouterLink
-import { useRoute, useRouter, RouterLink } from 'vue-router' 
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import axios from 'axios'
 
-// ====== STATE ======
 const router = useRouter()
-const route = useRoute()
-const productId = route.params.id
+const productId = useRoute().params.id
 
 const product = ref(null)
 const stockLots = ref([])
 const loading = ref(true)
 const error = ref(null)
 
-// ====== API CALLS ======
 async function fetchProductDetails() {
-  loading.value = true
-  error.value = null
-
   try {
+    loading.value = true
     const [productRes, stockRes] = await Promise.all([
       axios.get(`http://localhost:8000/api/tire-products/${productId}/`),
       axios.get(`http://localhost:8000/api/tire-products/${productId}/stock_by_year/`)
     ])
-
     product.value = productRes.data
     stockLots.value = stockRes.data
   } catch (err) {
-    console.error('Error fetching product details:', err)
+    console.error(err)
     error.value = 'ไม่สามารถโหลดข้อมูลสินค้าได้'
   } finally {
     loading.value = false
   }
 }
 
-// ====== HANDLERS ======
-function goBack() {
-  router.back()
-}
+const goBack = () => router.back()
 
-// ====== LIFECYCLE ======
 onMounted(fetchProductDetails)
 </script>
 
 <template>
   <div class="tire-detail-container">
     <div v-if="loading">กำลังโหลดข้อมูล...</div>
+    <div v-else-if="error" class="error-message">{{ error }}</div>
 
-    <div v-else-if="error" class="error-message">
-      {{ error }}
-    </div>
-
-    <div v-else-if="product">
+    <template v-else-if="product">
       <h1>{{ product.brand }} {{ product.pattern }}</h1>
       <h2>ขนาด: {{ product.size }}</h2>
       <hr />
+      <h3>รายละเอียดสต็อก (ตามล็อต)</h3>
 
-      <h3>รายละเอียดสต็อกคงเหลือ (แยกตามล็อต)</h3>
-
-      <div v-if="stockLots.length === 0" class="no-stock">
-        * ไม่พบข้อมูลสต็อกสำหรับสินค้ารายการนี้ *
-      </div>
+      <div v-if="!stockLots.length" class="no-stock">* ไม่พบข้อมูลสต็อก *</div>
 
       <table v-else>
         <thead>
@@ -70,8 +53,8 @@ onMounted(fetchProductDetails)
             <th>วันที่รับเข้า</th>
             <th>จำนวนรับเข้า</th>
             <th>จำนวนเบิกออก</th>
-            <th>จำนวนคงเหลือ</th>
-            <th class="action-header">การดำเนินการ</th>
+            <th>คงเหลือ</th>
+            <th>การดำเนินการ</th>
           </tr>
         </thead>
         <tbody>
@@ -81,19 +64,13 @@ onMounted(fetchProductDetails)
             <td class="right">{{ lot.quantity_in }}</td>
             <td class="right">{{ lot.total_out }}</td>
             <td class="right"><strong>{{ lot.quantity_remaining }}</strong></td>
-            
             <td class="action-cell">
-              <RouterLink 
-                :to="`/stock-out-form/${lot.lot_id}`" 
-                class="stock-out-button"
-              >
-                เบิกออก
-              </RouterLink>
+              <RouterLink :to="`/stock-out-form/${lot.lot_id}`" class="stock-out-button">เบิกออก</RouterLink>
             </td>
           </tr>
         </tbody>
       </table>
-    </div>
+    </template>
 
     <button @click="goBack" class="back-button">&larr; ย้อนกลับ</button>
   </div>
