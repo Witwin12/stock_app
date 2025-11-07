@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 import Home from '@/views/Home.vue'; 
 import TireDetail from '@/views/TireDetail.vue';
+import AddNewProduct from '@/views/AddNewProduct.vue';
 
 // 2. "routes" ต้องเป็น Array (วงเล็บเหลี่ยม)
 const routes = [
@@ -16,7 +17,12 @@ const routes = [
     path: '/product/:id', 
     name: 'product-detail',
     component: TireDetail
-  }
+  },
+  {
+      path: '/stock-in', 
+      name: 'stock-in',
+      component: AddNewProduct
+    }
 ];
 
 const router = createRouter({

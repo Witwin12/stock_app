@@ -13,6 +13,7 @@
 <style scoped>
 /* Style ในนี้คือ Style ที่ใช้ "ร่วมกันทุกหน้า" 
 */
+
 main {
   width: 100%;
   height: 100%;
