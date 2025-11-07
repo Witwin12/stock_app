@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+// (เพิ่ม) 1. Import RouterLink
+import { useRoute, useRouter, RouterLink } from 'vue-router' 
 import axios from 'axios'
 
 // ====== STATE ======
@@ -45,15 +46,12 @@ onMounted(fetchProductDetails)
 
 <template>
   <div class="tire-detail-container">
-    <!-- Loading -->
     <div v-if="loading">กำลังโหลดข้อมูล...</div>
 
-    <!-- Error -->
     <div v-else-if="error" class="error-message">
       {{ error }}
     </div>
 
-    <!-- Product Info -->
     <div v-else-if="product">
       <h1>{{ product.brand }} {{ product.pattern }}</h1>
       <h2>ขนาด: {{ product.size }}</h2>
@@ -73,6 +71,7 @@ onMounted(fetchProductDetails)
             <th>จำนวนรับเข้า</th>
             <th>จำนวนเบิกออก</th>
             <th>จำนวนคงเหลือ</th>
+            <th class="action-header">การดำเนินการ</th>
           </tr>
         </thead>
         <tbody>
@@ -82,12 +81,20 @@ onMounted(fetchProductDetails)
             <td class="right">{{ lot.quantity_in }}</td>
             <td class="right">{{ lot.total_out }}</td>
             <td class="right"><strong>{{ lot.quantity_remaining }}</strong></td>
+            
+            <td class="action-cell">
+              <RouterLink 
+                :to="`/stock-out-form/${lot.lot_id}`" 
+                class="stock-out-button"
+              >
+                เบิกออก
+              </RouterLink>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Back Button -->
     <button @click="goBack" class="back-button">&larr; ย้อนกลับ</button>
   </div>
 </template>
@@ -126,15 +133,43 @@ td {
   padding: 12px;
   text-align: left;
   color: #000;
+  vertical-align: middle; 
 }
 
 td.right {
   text-align: right;
 }
 
+th.action-header {
+  text-align: center;
+}
+
+td.action-cell {
+  text-align: center;
+}
+
 td strong {
   font-size: 1.1em;
   color: #0056b3;
+}
+
+/* style ปุ่มเบิกสินค้า */
+.stock-out-button {
+  display: inline-block;
+  padding: 6px 14px;
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #fff;
+  background-color: #dc3545; 
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.stock-out-button:hover {
+  background-color: #c82333; 
 }
 
 /* Back button */

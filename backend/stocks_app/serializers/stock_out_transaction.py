@@ -65,4 +65,4 @@ class StockOutTransactionSerializer(serializers.ModelSerializer):
                     f"เบิกออก ({quantity_to_stock_out} เส้น) เกินจำนวนคงเหลือ ({remaining_stock} เส้น) ของล็อตนี้"
                 )
                 
-            return data
+        return data
