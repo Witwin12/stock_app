@@ -1,66 +1,103 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import axios from 'axios'
+import DeleteButton from '@/components/DeleteProductButton.vue'
 
-// ====== STATE ======
+// --- State ---
 const products = ref([])
-const loading = ref(true)
 const error = ref(null)
+const searchText = ref('')
 
-// ====== API CALL ======
-async function fetchTireProducts() {
-  loading.value = true
+// --- Fetch Products ---
+async function fetchProducts(searchTerm = '') {
   error.value = null
-
   try {
-    const { data } = await axios.get('http://localhost:8000/api/tire-products/')
-    products.value = data
+    let url = 'http://localhost:8000/api/tire-products/'
+    if (searchTerm.trim()) {
+      url += `?search=${encodeURIComponent(searchTerm.trim())}`
+    }
+    const response = await axios.get(url)
+    products.value = response.data
   } catch (err) {
     console.error('Error fetching products:', err)
     error.value = 'ไม่สามารถโหลดข้อมูลได้'
-  } finally {
-    loading.value = false
   }
 }
 
-// ====== LIFECYCLE ======
-onMounted(fetchTireProducts)
+// --- Search Functions ---
+function triggerSearch() {
+  fetchProducts(searchText.value)
+}
+
+function clearSearch() {
+  searchText.value = ''
+  fetchProducts()
+}
+
+// --- Delete Event Handler ---
+function onProductDeleted(deletedProductId) {
+  products.value = products.value.filter(
+    (product) => product.product_id !== deletedProductId
+  )
+}
+
+// --- Lifecycle ---
+onMounted(() => {
+  fetchProducts()
+})
 </script>
 
 <template>
-  <div class="product-list-container">
-    <h1>รายการสต็อกยาง</h1>
+  <div class="tire-stock-container">
+    <h1 class="page-title">รายการสต็อกยาง</h1>
 
-    <!-- Loading -->
-    <div v-if="loading">กำลังโหลดข้อมูล...</div>
+    <div class="search-container">
+      <input 
+        v-model="searchText"
+        @keyup.enter="triggerSearch"
+        type="text"
+        placeholder="ค้นหา (ยี่ห้อ, ลาย, หรือขนาด)"
+      />
+      <button @click="triggerSearch">ค้นหา</button>
+      <button @click="clearSearch" class="button-clear">ล้าง</button>
+    </div>
 
-    <!-- Error -->
-    <div v-else-if="error" class="error-message">{{ error }}</div>
-
-    <!-- Table -->
-    <table v-else class="stock-table">
+    <table>
       <thead>
         <tr>
           <th>ยี่ห้อ</th>
           <th>ลายดอกยาง</th>
           <th>ขนาด</th>
-          <th>ยอดคงเหลือรวม (เส้น)</th>
-          <th>รายละเอียด</th>
+          <th>คงเหลือ</th>
+          <th class="header-actions">การดำเนินการ</th>
         </tr>
       </thead>
+
       <tbody>
+        <tr v-if="products.length === 0">
+          <td colspan="5" class="no-data">ไม่พบข้อมูลสินค้า</td>
+        </tr>
+
         <tr v-for="product in products" :key="product.product_id">
           <td>{{ product.brand }}</td>
           <td>{{ product.pattern }}</td>
           <td>{{ product.size }}</td>
           <td class="right">{{ product.total_stock_on_hand }}</td>
-          <td>
-            <router-link 
+
+          <td class="actions">
+            <RouterLink 
               :to="`/product/${product.product_id}`"
-              class="detail-button"
+              class="button-detail"
             >
               ดูสต็อก
-            </router-link>
+            </RouterLink>
+
+            <DeleteButton 
+              :product-id="product.product_id"
+              endpoint-url="/api/tire-products/"
+              @delete-success="onProductDeleted"
+            />
           </td>
         </tr>
       </tbody>
@@ -69,77 +106,113 @@ onMounted(fetchTireProducts)
 </template>
 
 <style scoped>
-.product-list-container {
+.tire-stock-container {
   font-family: sans-serif;
-  max-width: 900px;
-  margin: 30px auto;
-  background-color: #fff;
-  padding: 24px;
-  border-radius: 10px;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-  color: #222;
+  color: #000;
 }
 
-/* Header */
-h1 {
+/* ===== Title ===== */
+.page-title {
   text-align: center;
-  margin-bottom: 24px;
-  font-size: 1.8em;
-}
-
-/* Error */
-.error-message {
-  color: red;
-  text-align: center;
+  font-size: 1.8rem;
   font-weight: bold;
-  margin-top: 10px;
+  margin-bottom: 1.5rem;
+  color: #000;
 }
 
-/* Table */
-.stock-table {
+/* ===== Search Box ===== */
+.search-container {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.search-container input {
+  flex-grow: 1;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #000;
+}
+
+.search-container button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.search-container button:hover {
+  opacity: 0.9;
+}
+
+.search-container button:not(.button-clear) {
+  background-color: #007bff;
+}
+
+.search-container .button-clear {
+  background-color: #6c757d;
+}
+
+/* ===== Table ===== */
+table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.95em;
+  margin-top: 1rem;
+  color: #000;
 }
 
-.stock-table th {
-  background-color: #f5f5f5;
-  color: #333;
+th, td {
+  border: 1px solid #ddd;
+  padding: 12px;
   text-align: left;
-  padding: 12px;
-  border-bottom: 2px solid #ddd;
 }
 
-.stock-table td {
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-  vertical-align: middle;
-  text-align: center;
-}
-
-.stock-table tr:hover {
-  background-color: #fafafa;
+thead {
+  background-color: #f4f4f4;
 }
 
 td.right {
   text-align: right;
+  font-weight: bold;
 }
 
-/* Button */
-.detail-button {
+.no-data {
+  text-align: center;
+  color: #777;
+  font-style: italic;
+}
+
+th.header-actions {
+  text-align: center;
+}
+
+/* ===== Action Buttons ===== */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.button-detail {
   display: inline-block;
   background-color: #007bff;
-  color: #fff;
-  padding: 6px 12px;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
   text-decoration: none;
-  border-radius: 5px;
+  font-weight: bold;
   font-size: 0.9em;
-  transition: background-color 0.2s ease;
-  white-space: nowrap;
+  transition: background-color 0.2s;
 }
 
-.detail-button:hover {
+.button-detail:hover {
   background-color: #0056b3;
-  color: #fff;
 }
 </style>
