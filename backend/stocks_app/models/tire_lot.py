@@ -21,6 +21,11 @@ class TireLot(models.Model):
     date_in = models.DateField(verbose_name="วันที่รับเข้า")
     quantity_in = models.IntegerField(default=0, verbose_name="จำนวนรับเข้า")
     
+    is_active = models.BooleanField(
+        default=True, 
+        verbose_name="active",
+        db_index=True  
+    )
     @property
     def total_out(self):
         """คำนวณยอดเบิกออกทั้งหมดของ 'ล็อตนี้'"""

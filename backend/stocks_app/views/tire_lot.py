@@ -1,6 +1,8 @@
-from rest_framework import generics ,viewsets
+from rest_framework import generics ,viewsets, status
+from rest_framework.response import Response 
 from ..models import TireLot
 from ..serializers import TireLotSerializer
+from ..serializers import StockInSerializer
 
 class TireLotInAPIView(generics.CreateAPIView):
     """
@@ -12,13 +14,28 @@ class TireLotInAPIView(generics.CreateAPIView):
     ระบบจะสร้าง TireProduct (หากยังไม่มี) และ TireLot ให้อัตโนมัติ
     """
     queryset = TireLot.objects.all()
-    serializer_class = TireLotSerializer
+    serializer_class = StockInSerializer
 
-class TireLotViewSet(viewsets.ReadOnlyModelViewSet):
+class TireLotViewSet(viewsets.ModelViewSet):
     """
     API ViewSet สำหรับ 'ดึงข้อมูล' ล็อต (TireLot)
     - GET /api/tire-lots/ (ดูทุกล็อต)
     - GET /api/tire-lots/{id}/ (ดูรายละเอียดล็อตเดียว)
     """
-    queryset = TireLot.objects.all().order_by('-date_in')
+    queryset = TireLot.objects.filter(is_active = True).order_by('-date_in')
     serializer_class = TireLotSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        #ดึงล็อตที่จะลบ
+        lot = self.get_object() 
+        
+        #ตรวจสอบเงื่อนไข
+        if lot.total_out > 0:
+            #ถ้ามีประวัติเบิก -> ห้ามลบ
+            return Response(
+                {'error': 'ลบไม่ได้: ล็อตนี้มีประวัติการเบิกออกไปแล้ว'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        #ถ้าไม่มีประวัติ (total_out == 0) -> ลบได้
+        return super().destroy(request, *args, **kwargs)
