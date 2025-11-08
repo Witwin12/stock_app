@@ -28,7 +28,8 @@ class TireLotViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         #ดึงล็อตที่จะลบ
         lot = self.get_object() 
-        
+
+        product = lot.product
         #ตรวจสอบเงื่อนไข
         if lot.total_out > 0:
             #ถ้ามีประวัติเบิก -> ห้ามลบ
@@ -39,3 +40,9 @@ class TireLotViewSet(viewsets.ModelViewSet):
             
         #ถ้าไม่มีประวัติ (total_out == 0) -> ลบได้
         return super().destroy(request, *args, **kwargs)
+    
+        if response.status_code == status.HTTP_204_NO_CONTENT:
+
+            if product.total_stock_on_hand == 0:
+                product.is_active = False
+                product.save()

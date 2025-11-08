@@ -66,3 +66,28 @@ class StockOutTransactionSerializer(serializers.ModelSerializer):
                 )
                 
         return data
+    
+    def create(self, validated_data):
+        """
+        Override เมธอด create
+        เพื่อเพิ่ม Logic ตรวจสอบสต็อกหลังเบิกออก
+        """
+        
+        # 1. สร้าง Transaction (เบิกออก) ตามปกติ
+        #    (บันทึกลง DB)
+        transaction = super().create(validated_data)
+        
+        # 2. ดึง Product ที่เกี่ยวข้อง
+        #    validated_data['lot'] คือ <TireLot object>
+        product = validated_data['lot'].product 
+
+        # 3. ตรวจสอบสต็อกคงเหลือ *หลังจาก* บันทึก transaction นี้
+
+        if product.total_stock_on_hand == 0:
+            
+            # 4. ถ้าสต็อกเป็น 0 ให้ตั้งค่า is_active = False
+            product.is_active = False
+            product.save()
+            
+        # 5. ส่ง transaction กลับไป
+        return transaction
