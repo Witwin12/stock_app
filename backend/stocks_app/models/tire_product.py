@@ -15,7 +15,17 @@ class TireProduct(models.Model):
         verbose_name="active",
         db_index=True  
     )
-
+    @property
+    def stock_status(self):
+        """
+        ส่งสถานะเป็นข้อความสำหรับแสดงผล
+        """
+        if self.is_active:
+            # (is_active=True หมายถึง ยังมีของ หรือยังไม่เคยมีของ)
+            return "มีสินค้า"
+        else:
+            # (is_active=False หมายถึง สต็อกเป็น 0)
+            return "ของหมด"
     @property
     def total_stock_on_hand(self):
         """

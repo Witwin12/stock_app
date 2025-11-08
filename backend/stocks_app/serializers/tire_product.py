@@ -5,6 +5,7 @@ class TireProductSerializer(serializers.ModelSerializer):
     
     # --- การดึงค่าจาก @property ---
     total_stock_on_hand = serializers.ReadOnlyField()
+    stock_status = serializers.ReadOnlyField()
 
     class Meta:
         model = TireProduct
@@ -14,5 +15,6 @@ class TireProductSerializer(serializers.ModelSerializer):
             'pattern', 
             'size',
             'total_stock_on_hand',
-            'is_active'
+            'is_active',
+            'stock_status'
         ]

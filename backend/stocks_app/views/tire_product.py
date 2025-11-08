@@ -19,15 +19,13 @@ class TireProductViewSet(viewsets.ModelViewSet):
         """
         
         # Queryset พื้นฐาน (ที่กรอง is_active=True เสมอ)
-        queryset = TireProduct.objects.filter(is_active=True)
+        queryset = TireProduct.objects.all()
         
         # 4. ดึงค่า search params จาก URL
   
         brand = self.request.query_params.get('brand')
         pattern = self.request.query_params.get('pattern')
         size = self.request.query_params.get('size')
-        
-        #  เพิ่ม 1 search box ค้นหาทุกอย่าง
         search = self.request.query_params.get('search')
         
         # --- 5. ใช้ .filter() ต่อเนื่อง ( chaining ) ---
@@ -51,7 +49,8 @@ class TireProductViewSet(viewsets.ModelViewSet):
             )
             
         # 7. เรียงลำดับผลลัพธ์
-        return queryset.order_by('brand', 'pattern')
+        return queryset.order_by('-is_active', 'brand', 'pattern')
+    
     @action(detail=True, methods=['get'])
     
     def stock_by_year(self, request, pk=None):
