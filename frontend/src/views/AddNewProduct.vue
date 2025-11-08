@@ -120,6 +120,7 @@ function goBackHome() {
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   background-color: #ffffff;
+  color: #000; 
 }
 
 .form-header {
@@ -134,6 +135,7 @@ function goBackHome() {
 .form-header h1 {
   margin: 0;
   font-size: 1.75rem;
+  color: #000; 
 }
 
 .back-button {
@@ -144,6 +146,7 @@ function goBackHome() {
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
+  color: #000; 
 }
 .back-button:hover {
   background-color: #f4f4f4;
@@ -163,12 +166,14 @@ fieldset {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  color: #000; 
 }
 
 legend {
   font-size: 1.2rem;
   font-weight: bold;
   padding: 0 0.5rem;
+  color: #000;
 }
 
 .form-group {
@@ -179,14 +184,55 @@ legend {
 .form-group label {
   font-weight: 600;
   margin-bottom: 0.5rem;
+  color: #000;
 }
 
+/* ช่อง input ทั่วไป */
 .form-group input {
   padding: 0.75rem;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1rem;
+  background-color: #fff;
+  color: #000;
 }
+
+/*  ปรับสไตล์ช่องวันที่ + ใส่ไอคอนตกแต่ง */
+.form-group input[type="date"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-color: #fff;
+  color: #000;
+  padding: 0.75rem 2.5rem 0.75rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+
+  /* ไอคอนตกแต่งทางขวา */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='gray' viewBox='0 0 24 24'><path d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 20px;
+  cursor: pointer;
+  position: relative;
+}
+
+/*  ทำให้ปฏิทินของ browser ยังคงกดได้ */
+.form-group input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1; /* ให้แสดงปกติ */
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  background: transparent;
+  color: transparent;
+}
+
 
 .submit-button {
   padding: 1rem;
@@ -215,4 +261,5 @@ legend {
   border-radius: 5px;
   margin-bottom: 1.5rem;
 }
+
 </style>
