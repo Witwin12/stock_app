@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db.models import Q
 
 from ..models import TireProduct
 from ..serializers import TireProductSerializer
@@ -10,10 +11,50 @@ class TireProductViewSet(viewsets.ModelViewSet):
     """
     API ViewSet สำหรับจัดการข้อมูลยาง (TireProduct)
     """
-    queryset = TireProduct.objects.filter(is_active = True).order_by('brand', 'pattern')
+    #queryset = TireProduct.objects.filter(is_active = True).order_by('brand', 'pattern')
     serializer_class = TireProductSerializer
 
+    def get_queryset(self):
+        """
+        Override เมธอดนี้เพื่อเพิ่ม logic การ search
+        """
+        
+        # Queryset พื้นฐาน (ที่กรอง is_active=True เสมอ)
+        queryset = TireProduct.objects.filter(is_active=True)
+        
+        # 4. ดึงค่า search params จาก URL
+  
+        brand = self.request.query_params.get('brand')
+        pattern = self.request.query_params.get('pattern')
+        size = self.request.query_params.get('size')
+        
+        #  เพิ่ม 1 search box ค้นหาทุกอย่าง
+        search = self.request.query_params.get('search')
+        
+        # --- 5. ใช้ .filter() ต่อเนื่อง ( chaining ) ---
+        if brand:
+            # __icontains = ค้นหาแบบ "มีคำนี้" (ไม่สนตัวเล็ก/ใหญ่)
+            queryset = queryset.filter(brand__icontains=brand)
+        
+        if pattern:
+            queryset = queryset.filter(pattern__icontains=pattern)
+        
+        if size:
+            queryset = queryset.filter(size__icontains=size)
+
+        # 6. การกรองแบบ OR 
+        if search:
+            # สร้างเงื่อนไข "หรือ"
+            queryset = queryset.filter(
+                Q(brand__icontains=search) |
+                Q(pattern__icontains=search) |
+                Q(size__icontains=search)
+            )
+            
+        # 7. เรียงลำดับผลลัพธ์
+        return queryset.order_by('brand', 'pattern')
     @action(detail=True, methods=['get'])
+    
     def stock_by_year(self, request, pk=None):
         """
         API สำหรับดูสต็อกคงเหลือของยางรุ่นนี้  
