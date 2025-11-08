@@ -10,6 +10,11 @@ class TireProduct(models.Model):
     brand = models.CharField(max_length=50, verbose_name="ยี่ห้อ")
     pattern = models.CharField(max_length=50, verbose_name="ลายดอกยาง")
     size = models.CharField(max_length=50, verbose_name="ขนาด")
+    is_active = models.BooleanField(
+        default=True, 
+        verbose_name="active",
+        db_index=True  
+    )
 
     @property
     def total_stock_on_hand(self):

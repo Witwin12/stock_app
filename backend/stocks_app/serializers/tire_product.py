@@ -13,5 +13,6 @@ class TireProductSerializer(serializers.ModelSerializer):
             'brand', 
             'pattern', 
             'size',
-            'total_stock_on_hand'  
+            'total_stock_on_hand',
+            'is_active'
         ]

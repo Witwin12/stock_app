@@ -10,7 +10,7 @@ class TireProductViewSet(viewsets.ModelViewSet):
     """
     API ViewSet สำหรับจัดการข้อมูลยาง (TireProduct)
     """
-    queryset = TireProduct.objects.all().order_by('brand', 'pattern')
+    queryset = TireProduct.objects.filter(is_active = True).order_by('brand', 'pattern')
     serializer_class = TireProductSerializer
 
     @action(detail=True, methods=['get'])
