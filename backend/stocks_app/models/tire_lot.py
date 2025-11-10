@@ -1,6 +1,8 @@
 from django.db import models
 from django.db.models import Sum
 from .tire_product import TireProduct 
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 
 class TireLot(models.Model):
     """
@@ -47,3 +49,25 @@ class TireLot(models.Model):
     class Meta:
         verbose_name = "ล็อตยาง (Stock In)"
         verbose_name_plural = "ล็อตยาง (Stock In)"
+
+@receiver(post_delete, sender=TireLot)
+def update_product_status_after_lot_delete(sender, instance, **kwargs):
+    """
+    เมื่อ TireLot ถูกลบ -> ตรวจสอบสต็อกใหม่ทั้งหมด
+    """
+    product = instance.product
+    remaining = product.total_stock_on_hand
+    product.is_active = remaining > 0
+    product.save()
+
+
+@receiver(post_save, sender=TireLot)
+def update_product_status_after_lot_create(sender, instance, created, **kwargs):
+    """
+    เมื่อ TireLot ถูกสร้างหรืออัปเดต -> ตรวจสอบสต็อกอีกครั้ง
+    """
+    product = instance.product
+    remaining = product.total_stock_on_hand
+    if remaining > 0 and not product.is_active:
+        product.is_active = True
+        product.save()
