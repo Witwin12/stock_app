@@ -1,100 +1,3 @@
-<script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
-
-// --- Router & Params ---
-const router = useRouter()
-const lotId = useRoute().params.lotId
-
-// --- State ---
-const lotDetails = ref(null)
-const loading = ref(true)
-const errorMessage = ref(null)
-const isSubmitting = ref(false)
-
-// --- Form State (with defaults) ---
-const defaults = {
-  employeeId: '',
-  quantity: 1,
-  date: new Date().toISOString().split('T')[0],
-  remarks: ''
-}
-
-const employee_id = ref(defaults.employeeId)
-const quantity_out = ref(defaults.quantity)
-const date_out = ref(defaults.date)
-const remarks = ref(defaults.remarks)
-const loadedDefaultQuantity = ref(defaults.quantity)
-
-// --- Fetch Lot Details ---
-async function fetchLotDetails() {
-  try {
-    loading.value = true
-    const { data } = await axios.get(`http://localhost:8000/api/tire-lots/${lotId}/`)
-    lotDetails.value = data
-
-    const remaining = data.quantity_remaining
-    quantity_out.value = remaining > 0 ? 1 : 0
-    loadedDefaultQuantity.value = quantity_out.value
-  } catch (err) {
-    console.error(err)
-    errorMessage.value = 'ไม่พบข้อมูลล็อต หรือไม่สามารถเชื่อมต่อ API ได้'
-  } finally {
-    loading.value = false
-  }
-}
-
-// --- Submit Form ---
-async function handleStockOut() {
-  const qty = +quantity_out.value
-
-  if (!qty || qty <= 0)
-    return (errorMessage.value = 'จำนวนที่เบิกต้องมากกว่า 0')
-
-  if (qty > lotDetails.value.quantity_remaining)
-    return (errorMessage.value = `เบิกเกิน! คงเหลือ ${lotDetails.value.quantity_remaining} เส้น`)
-
-  if (!employee_id.value)
-    return (errorMessage.value = 'กรุณาระบุ ID พนักงาน')
-
-  const payload = {
-    lot: +lotId,
-    employee: +employee_id.value,
-    quantity_out: qty,
-    date_out: date_out.value,
-    remarks: remarks.value
-  }
-
-  try {
-    isSubmitting.value = true
-    await axios.post('http://localhost:8000/api/stock-out/', payload)
-    alert('เบิกสินค้าสำเร็จ!')
-    router.back()
-  } catch (error) {
-    console.error(error)
-    errorMessage.value = error.response?.data
-      ? JSON.stringify(error.response.data)
-      : 'เกิดข้อผิดพลาดในการบันทึก'
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-// --- Cancel / Back ---
-function goBack() {
-  const isDirty =
-    employee_id.value !== defaults.employeeId ||
-    quantity_out.value !== loadedDefaultQuantity.value ||
-    date_out.value !== defaults.date ||
-    remarks.value !== defaults.remarks
-
-  if (!isDirty || confirm('คุณแน่ใจหรือไม่ว่าจะออกโดยไม่บันทึก?'))
-    router.back()
-}
-
-onMounted(fetchLotDetails)
-</script>
 
 <template>
   <main class="stock-out-form-container">
@@ -119,15 +22,18 @@ onMounted(fetchLotDetails)
       <fieldset>
         <legend>ข้อมูลการเบิก</legend>
 
-        <div class="form-group">
-          <label for="employee">ID พนักงาน</label>
-          <input id="employee" v-model="employee_id" type="number" placeholder="ระบุ ID พนักงาน" required />
+      <div class="form-group">
+          <label for="employee">ชื่อพนักงาน</label>
+          <input
+            id="employee"
+            v-model="employee_name" type="text" placeholder="ระบุชื่อพนักงาน" required
+          />
         </div>
 
         <div class="form-group">
           <label for="quantity">จำนวนที่เบิก</label>
           <input
-            id="quantity"
+            id="quantity" 
             v-model.number="quantity_out"
             type="number"
             min="1"

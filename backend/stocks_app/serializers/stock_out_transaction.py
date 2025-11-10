@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import StockOutTransaction
+from ..models import StockOutTransaction ,Employee
 from .tire_product import TireProductSerializer
 
 class StockOutTransactionSerializer(serializers.ModelSerializer):
@@ -10,7 +10,10 @@ class StockOutTransactionSerializer(serializers.ModelSerializer):
     lot_display = serializers.StringRelatedField(source='lot', read_only=True)
     
     # ดึงค่า 'username' จาก `Employee` ที่เชื่อมโยงอยู่
-    employee_username = serializers.ReadOnlyField(source='employee.username')
+    employee = serializers.SlugRelatedField(
+        slug_field='username',  
+        queryset=Employee.objects.all()
+    )
 
     product = TireProductSerializer(source = 'lot.product',read_only=True)
     #แสดงยอดคงเหลือของล็อต (ณ ก่อนเบิก) เพื่อให้ Response ชัดเจน
@@ -30,8 +33,7 @@ class StockOutTransactionSerializer(serializers.ModelSerializer):
             
             # --- 3. Fields สำหรับ Output (Read-only) ---
             'product',            # (แสดงผล)
-            'lot_display',        # (แสดงผล)
-            'employee_username',  # (แสดงผล)
+            'lot_display',        # (แสดงผล)ป
             'lot_remaining_before_txn' # (แสดงผล)
             ]
         read_only_fields = ['transaction_id']
