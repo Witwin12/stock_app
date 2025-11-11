@@ -4,6 +4,7 @@ import Home from '@/views/Home.vue';
 import TireDetail from '@/views/TireDetail.vue';
 import AddNewProduct from '@/views/AddNewProduct.vue';
 import TireOut from '@/views/TireOut.vue';
+import LoginPage from '@/views/LoginPage.vue';
 // 2. "routes" ต้องเป็น Array (วงเล็บเหลี่ยม)
 const routes = [
   {
@@ -27,7 +28,12 @@ const routes = [
   path: '/stock-out-form/:lotId', 
   name: 'stock-out-form',
   component: TireOut
-}
+},
+{
+    path: '/login',
+    name: 'Login',
+    component: LoginPage
+  },
 ];
 
 const router = createRouter({

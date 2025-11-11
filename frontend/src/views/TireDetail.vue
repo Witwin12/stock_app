@@ -12,21 +12,42 @@ const stockLots = ref([])
 const loading = ref(true)
 const error = ref(null)
 
+function getAuthHeaders() {
+  const token = localStorage.getItem('authToken')
+  if (!token) {
+    error.value = "คุณยังไม่ได้ล็อกอิน!"
+    return null
+  }
+  return {
+    'Authorization': `Token ${token}`
+  }
+}
+
 async function fetchProductDetails() {
- try {
-  loading.value = true
-  const [productRes, stockRes] = await Promise.all([
-   axios.get(`http://localhost:8000/api/tire-products/${productId}/`),
-   axios.get(`http://localhost:8000/api/tire-products/${productId}/stock_by_year/`)
-  ])
-  product.value = productRes.data
-  stockLots.value = stockRes.data
- } catch (err) {
-  console.error(err)
-  error.value = 'ไม่สามารถโหลดข้อมูลสินค้าได้'
- } finally {
-  loading.value = false
- }
+  try {
+    loading.value = true
+    const headers = getAuthHeaders()
+    if (!headers) {
+      loading.value = false
+      return
+    }
+
+    const [productRes, stockRes] = await Promise.all([
+      axios.get(`http://localhost:8000/api/tire-products/${productId}/`, { headers }),
+      axios.get(`http://localhost:8000/api/tire-products/${productId}/stock_by_year/`, { headers })
+    ])
+    product.value = productRes.data
+    stockLots.value = stockRes.data
+
+  } catch (err) {
+    if (err.response?.status === 401) {
+      error.value = "คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้ (401)"
+    } else {
+      error.value = 'ไม่สามารถโหลดข้อมูลสินค้าได้'
+    }
+  } finally {
+    loading.value = false
+  }
 }
 
 //สร้างฟังก์ชันรับ emit 'delete-success'

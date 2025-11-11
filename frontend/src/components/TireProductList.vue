@@ -8,20 +8,38 @@ import DeleteButton from '@/components/DeleteProductButton.vue'
 const products = ref([])
 const error = ref(null)
 const searchText = ref('')
+const loading = ref(true)
 
 // --- Fetch Products ---
 async function fetchProducts(searchTerm = '') {
   error.value = null
+  loading.value = true
+  const token = localStorage.getItem('authToken')
+  const headers = {}
+  if (token) {
+    headers['Authorization'] = `Token ${token}`
+  }
   try {
-    let url = 'http://localhost:8000/api/tire-products/'
+    const url = 'http://localhost:8000/api/tire-products/'
+    const params = {}
     if (searchTerm.trim()) {
-      url += `?search=${encodeURIComponent(searchTerm.trim())}`
+      params.search = searchTerm.trim()
     }
-    const response = await axios.get(url)
+    const response = await axios.get(url, { 
+        params,
+        headers 
+    })
     products.value = response.data
-  } catch (err) {
+} catch (err) {
     console.error('Error fetching products:', err)
-    error.value = 'ไม่สามารถโหลดข้อมูลได้'
+    // (ตอนนี้ Error 401 จะเกิดเฉพาะ "Token ผิด" เท่านั้น)
+    if (err.response?.status === 401) {
+        error.value = "Token ไม่ถูกต้อง, กรุณาล็อกอินใหม่ (401)"
+    } else {
+        error.value = 'ไม่สามารถโหลดข้อมูลได้'
+    }
+  } finally {
+    loading.value = false 
   }
 }
 
@@ -44,7 +62,13 @@ function onProductDeleted(deletedProductId) {
 
 // --- Lifecycle ---
 onMounted(() => {
-  fetchProducts()
+  const token = localStorage.getItem('authToken')
+  if (!token) {
+    error.value = 'กรุณาเข้าสู่ระบบก่อนดูข้  อมูล'
+    loading.value = false
+  } else {
+    fetchProducts()
+  }
 })
 </script>
 

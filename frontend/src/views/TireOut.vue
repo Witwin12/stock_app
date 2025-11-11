@@ -1,11 +1,144 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router' // (1) Import useRouter
+import axios from 'axios'
+
+// --- (2) Setup Router ---
+const router = useRouter()
+const lotId = useRoute().params.lotId
+
+// --- State ---
+const lotDetails = ref(null)
+const loading = ref(true)
+const errorMessage = ref(null)
+const isSubmitting = ref(false)
+
+// --- (3) ลบ employee_id ออกไปเลย ---
+const defaults = {
+  quantity: 1,
+  date: new Date().toISOString().split('T')[0],
+  remarks: ''
+}
+const quantity_out = ref(defaults.quantity)
+const date_out = ref(defaults.date)
+const remarks = ref(defaults.remarks)
+// (ลบ loadedDefaultQuantity ทิ้งไป เราจะใช้แค่ router.back())
+
+// --- (4) เพิ่ม Function สำหรับดึง Headers (สำคัญมาก) ---
+// (เราจะใช้ Token จาก localStorage ที่ LoginView.vue เก็บไว้)
+function getAuthHeaders() {
+  const token = localStorage.getItem('authToken')
+  if (!token) {
+    errorMessage.value = "คุณยังไม่ได้ล็อกอิน!"
+    // (ทางเลือก) พาไปหน้า Login
+    router.push('/login') 
+    return null
+  }
+  return {
+    'Authorization': `Token ${token}`
+  }
+}
+
+// --- (5) แก้ไข Fetch Lot Details (ให้แนบ Token) ---
+async function fetchLotDetails() {
+  const headers = getAuthHeaders()
+  if (!headers) {
+      loading.value = false
+      return // ถ้าไม่มี Token ก็ไม่ต้องทำต่อ
+  }
+
+  try {
+    loading.value = true
+    const { data } = await axios.get(
+      `http://localhost:8000/api/tire-lots/${lotId}/`,
+      { headers } // <-- (สำคัญ) แนบ Token ไปด้วย
+    )
+    
+    lotDetails.value = data
+    const remaining = data.quantity_remaining
+    quantity_out.value = remaining > 0 ? 1 : 0
+
+  } catch (err) {
+    console.error(err)
+    if (err.response?.status === 401) {
+        errorMessage.value = "คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้ (401)"
+    } else {
+        errorMessage.value = 'ไม่พบข้อมูลล็อต หรือไม่สามารถเชื่อมต่อ API ได้'
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+// --- (6) แก้ไข Submit Form (ลบ employee, แนบ Token) ---
+async function handleStockOut() {
+  const headers = getAuthHeaders()
+  if (!headers) return // ถ้าไม่มี Token ก็ไม่ต้องทำต่อ
+
+  const qty = +quantity_out.value
+
+  // (ลบการตรวจสอบ employee_name ออก)
+  if (!qty || qty <= 0)
+    return (errorMessage.value = 'จำนวนที่เบิกต้องมากกว่า 0')
+
+  if (qty > lotDetails.value.quantity_remaining)
+    return (errorMessage.value = `เบิกเกิน! คงเหลือ ${lotDetails.value.quantity_remaining} เส้น`)
+
+  // (7) แก้ไข Payload (เอา employee ออก)
+  const payload = {
+    lot: +lotId,
+    // (ลบ) employee: ...  <-- Backend ไม่ต้องการแล้ว!
+    quantity_out: qty,
+    date_out: date_out.value,
+    remarks: remarks.value
+  }
+
+  try {
+    isSubmitting.value = true
+    // (สำคัญ) แนบ Headers ไปด้วย
+    await axios.post('http://localhost:8000/api/stock-out/', payload, { headers })
+    
+    // (เราควรใช้ Modal ที่เราทำไว้ใน App.vue หรือสร้างใหม่)
+    alert('เบิกสินค้าสำเร็จ!') // (ชั่วคราว)
+    router.back() // กลับไปหน้า List
+    
+  } catch (error) {
+    console.error(error)
+    if (error.response?.data) {
+        const data = error.response.data;
+        // ดึง Error แรกที่เจอ
+        const firstErrorKey = Object.keys(data)[0];
+        const firstErrorMessage = Array.isArray(data[firstErrorKey]) ? data[firstErrorKey][0] : data[firstErrorKey];
+        errorMessage.value = firstErrorMessage || 'เกิดข้อผิดพลาดในการบันทึก';
+    } else {
+        errorMessage.value = 'เกิดข้อผิดพลาดในการบันทึก'
+    }
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+// --- (8) แก้ไข Cancel / Back (ให้ง่ายขึ้น) ---
+function goBack() {
+  // (ลบ `confirm` ที่อาจถูกบล็อก และ `isDirty` ที่พังแล้ว)
+  router.back()
+}
+
+onMounted(fetchLotDetails)
+</script>
 
 <template>
+  <!-- 
+    (Template เกือบเหมือนเดิม)
+    (เราแค่ "ลบ" ช่องกรอก "ชื่อพนักงาน" ออก)
+  -->
   <main class="stock-out-form-container">
     <div class="form-header">
       <button @click="goBack" class="back-button">&larr; ย้อนกลับ</button>
       <h1>ฟอร์มเบิกสินค้า (Stock-Out)</h1>
     </div>
 
+    <!-- (ข้อความ Error จะแสดงที่นี่) -->
     <div v-if="loading" class="loading-message">กำลังโหลดข้อมูล...</div>
     <div v-else-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
@@ -22,13 +155,8 @@
       <fieldset>
         <legend>ข้อมูลการเบิก</legend>
 
-      <div class="form-group">
-          <label for="employee">ชื่อพนักงาน</label>
-          <input
-            id="employee"
-            v-model="employee_name" type="text" placeholder="ระบุชื่อพนักงาน" required
-          />
-        </div>
+        <!-- --- (9) ลบช่องกรอก "ชื่อพนักงาน" ออกจากที่นี่ --- -->
+        <!-- <div class="form-group"> ... </div> -->
 
         <div class="form-group">
           <label for="quantity">จำนวนที่เบิก</label>
@@ -61,7 +189,6 @@
     </form>
   </main>
 </template>
-
 
 <style scoped>
 .stock-out-form-container {
