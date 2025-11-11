@@ -39,7 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'stocks_app',
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
+    'dj_rest_auth',
 ]
 
 MIDDLEWARE = [
@@ -136,3 +138,21 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
+
+REST_FRAMEWORK = {
+    # ระบุว่าเราจะใช้ Token ในการยืนยันตัวตน
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+        
+    ),
+}
+
+# settings.py
+
+REST_AUTH = {
+    # บอกให้ Login endpoint ใช้ Serializer ตัวที่เราสร้าง
+    'USER_DETAILS_SERIALIZER': 'stocks_app.serializers.employee.CustomUserDetailsSerializer',
+    
+
+    'USE_JWT': False,
+}
