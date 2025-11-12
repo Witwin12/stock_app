@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from django.db.models import Q
 
 from ..models import TireProduct
@@ -11,7 +12,7 @@ class TireProductViewSet(viewsets.ModelViewSet):
     """
     API ViewSet สำหรับจัดการข้อมูลยาง (TireProduct)
     """
-    serializer_class = TireProductSerializer
+    serializer_class = TireProductSerializer             # list/retrieve เปิดดูได้เลย
 
     def get_queryset(self):
         """
@@ -50,6 +51,20 @@ class TireProductViewSet(viewsets.ModelViewSet):
             
         # 7. เรียงลำดับผลลัพธ์
         return queryset.order_by('-is_active', 'brand', 'pattern')
+    #Override เมธอด get_permissions
+    def get_permissions(self):
+        """
+        กำหนดสิทธิ์การเข้าถึง (Permissions) แยกตาม action
+        """
+        if self.action == 'destroy':
+            # ลบได้เฉพาะ admin
+            return [IsAdminUser()]
+        elif self.action in ['create', 'update', 'partial_update']:
+            # เพิ่ม/แก้ไข ต้องล็อกอิน
+            return [IsAuthenticated()]
+        
+        # นอกนั้น (เช่น list, retrieve) ไม่ต้องล็อกอินก็ได้
+        return [AllowAny()]
     
     @action(detail=True, methods=['get'])
     

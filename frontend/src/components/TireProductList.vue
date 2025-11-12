@@ -10,16 +10,16 @@ const error = ref(null)
 const searchText = ref('')
 const loading = ref(true)
 const isLoggedIn = ref(false)
+const isAdmin = ref(false)
 
 // --- Fetch Products ---
 async function fetchProducts(searchTerm = '') {
   error.value = null
   loading.value = true
   const token = localStorage.getItem('authToken')
-  const headers = {}
-  if (token) {
-    headers['Authorization'] = `Token ${token}`
-  }
+  const headers = token
+  ? { Authorization: `Token ${token}` }
+  : {}
   try {
     const url = 'http://localhost:8000/api/tire-products/'
     const params = {}
@@ -41,6 +41,26 @@ async function fetchProducts(searchTerm = '') {
     }
   } finally {
     loading.value = false 
+  }
+}
+
+// --- ตรวจสอบสิทธิ์ผู้ใช้ ---
+async function checkUserRole() {
+  const token = localStorage.getItem('authToken')
+  if (!token) {
+    isAdmin.value = false
+    return
+  }
+
+  try {
+    const response = await axios.get('http://localhost:8000/api/auth/user/', {
+      headers: { Authorization: `Token ${token}` }
+    })
+    // สมมติ Django ส่งข้อมูลกลับเช่น { username: "admin", is_admin: true }
+    isAdmin.value = response.data.role === 'admin'
+  } catch (err) {
+    console.error('Error checking user role:', err)
+    isAdmin.value = false
   }
 }
 
@@ -67,7 +87,8 @@ onMounted(() => {
 
   isLoggedIn.value = !!token  
   
-  fetchProducts()
+ checkUserRole()
+ fetchProducts()
 })
 </script>
 
@@ -75,63 +96,70 @@ onMounted(() => {
  <div class="tire-stock-container">
   <h1 class="page-title">รายการสต็อกยาง</h1>
 
-    <div class="search-container">
-   <input 
-    v-model="searchText"
-    @keyup.enter="triggerSearch"
-    type="text"
-    placeholder="ค้นหา (ยี่ห้อ, ลาย, หรือขนาด)"
-   />
-   <button @click="triggerSearch">ค้นหา</button>
-   <button @click="clearSearch" class="button-clear">ล้าง</button>
+  <div class="search-container">
+    <input 
+      v-model="searchText"
+      @keyup.enter="triggerSearch"
+      type="text"
+      placeholder="ค้นหา (ยี่ห้อ, ลาย, หรือขนาด)"
+    />
+    <button @click="triggerSearch">ค้นหา</button>
+    <button @click="clearSearch" class="button-clear">ล้าง</button>
   </div>
 
   <table>
-   <thead>
-    <tr>
-     <th>ยี่ห้อ</th>
-     <th>ลายดอกยาง</th>
-     <th>ขนาด</th>
-     <th>คงเหลือ</th>
-               <th>สถานะ</th>
-     <th class="header-actions">การดำเนินการ</th>
-    </tr>
-   </thead>
+    <thead>
+      <tr>
+        <th>ยี่ห้อ</th>
+        <th>ลายดอกยาง</th>
+        <th>ขนาด</th>
+        <th>คงเหลือ</th>
+        <th>สถานะ</th>
+        <th class="header-actions">การดำเนินการ</th>
+      </tr>
+    </thead>
 
-   <tbody>
-    <tr v-if="products.length === 0">
-     <td colspan="6" class="no-data">ไม่พบข้อมูลสินค้า</td>
-    </tr>
+    <tbody>
+      <tr v-if="products.length === 0">
+        <td colspan="6" class="no-data">ไม่พบข้อมูลสินค้า</td>
+      </tr>
 
-    <tr v-for="product in products" :key="product.product_id" :class="{ 'out-of-stock': !product.is_active }">
-     <td>{{ product.brand }}</td>
-     <td>{{ product.pattern }}</td>
-     <td>{{ product.size }}</td>
-     <td class="right">{{ product.total_stock_on_hand }}</td>
-
-          <td class="status-cell">
-            <span :class="product.is_active ? 'status-in' : 'status-out'">
-              {{ product.stock_status }}
-            </span>
-          </td>
-
-     <td class="actions">
-      <RouterLink 
-       :to="`/product/${product.product_id}`"
-       class="button-detail"
+      <tr
+        v-for="product in products"
+        :key="product.product_id"
+        :class="{ 'out-of-stock': !product.is_active }"
       >
-       ดูสต็อก
-      </RouterLink>
+        <td>{{ product.brand }}</td>
+        <td>{{ product.pattern }}</td>
+        <td>{{ product.size }}</td>
+        <td class="right">{{ product.total_stock_on_hand }}</td>
 
-      <DeleteButton
-       v-if="isLoggedIn" 
-       :product-id="product.product_id"
-       endpoint-url="/api/tire-products/"
-       @delete-success="onProductDeleted"
-      />
-     </td>
-    </tr>
-   </tbody>
+        <td class="status-cell">
+          <span :class="product.is_active ? 'status-in' : 'status-out'">
+            {{ product.stock_status }}
+          </span>
+        </td>
+
+        <td class="actions">
+          <!-- ปุ่มดูรายละเอียด -->
+          <RouterLink 
+            :to="`/product/${product.product_id}`"
+            class="button-detail"
+          >
+            ดูสต็อก
+          </RouterLink>
+
+          <!-- ปุ่มลบ: แสดงเฉพาะเมื่อเป็น admin -->
+          <DeleteButton
+            v-if="isAdmin"
+            :product-id="product.product_id"
+            endpoint-url="/api/tire-products/"
+            :is-admin="isAdmin"
+            @delete-success="onProductDeleted"
+          />
+        </td>
+      </tr>
+    </tbody>
   </table>
  </div>
 </template>
