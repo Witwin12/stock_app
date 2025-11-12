@@ -13,7 +13,7 @@ const loading = ref(true)
 const errorMessage = ref(null)
 const isSubmitting = ref(false)
 
-// --- (3) ลบ employee_id ออกไปเลย ---
+
 const defaults = {
   quantity: 1,
   date: new Date().toISOString().split('T')[0],
@@ -22,15 +22,16 @@ const defaults = {
 const quantity_out = ref(defaults.quantity)
 const date_out = ref(defaults.date)
 const remarks = ref(defaults.remarks)
-// (ลบ loadedDefaultQuantity ทิ้งไป เราจะใช้แค่ router.back())
 
-// --- (4) เพิ่ม Function สำหรับดึง Headers (สำคัญมาก) ---
+
+
+
 // (เราจะใช้ Token จาก localStorage ที่ LoginView.vue เก็บไว้)
 function getAuthHeaders() {
   const token = localStorage.getItem('authToken')
   if (!token) {
     errorMessage.value = "คุณยังไม่ได้ล็อกอิน!"
-    // (ทางเลือก) พาไปหน้า Login
+
     router.push('/login') 
     return null
   }
@@ -70,24 +71,30 @@ async function fetchLotDetails() {
   }
 }
 
-// --- (6) แก้ไข Submit Form (ลบ employee, แนบ Token) ---
+
 async function handleStockOut() {
   const headers = getAuthHeaders()
   if (!headers) return // ถ้าไม่มี Token ก็ไม่ต้องทำต่อ
 
+  const userData = JSON.parse(localStorage.getItem('userData') || '{}')
+  if (!userData || !userData.id) {
+    errorMessage.value = 'ข้อมูลผู้ใช้ไม่ถูกต้อง กรุณาเข้าสู่ระบบใหม่'
+    router.push('/login')
+    return
+  }
   const qty = +quantity_out.value
 
-  // (ลบการตรวจสอบ employee_name ออก)
+
   if (!qty || qty <= 0)
     return (errorMessage.value = 'จำนวนที่เบิกต้องมากกว่า 0')
 
   if (qty > lotDetails.value.quantity_remaining)
     return (errorMessage.value = `เบิกเกิน! คงเหลือ ${lotDetails.value.quantity_remaining} เส้น`)
 
-  // (7) แก้ไข Payload (เอา employee ออก)
+
   const payload = {
     lot: +lotId,
-    // (ลบ) employee: ...  <-- Backend ไม่ต้องการแล้ว!
+    employee: userData.username,
     quantity_out: qty,
     date_out: date_out.value,
     remarks: remarks.value
@@ -95,10 +102,10 @@ async function handleStockOut() {
 
   try {
     isSubmitting.value = true
-    // (สำคัญ) แนบ Headers ไปด้วย
+
     await axios.post('http://localhost:8000/api/stock-out/', payload, { headers })
     
-    // (เราควรใช้ Modal ที่เราทำไว้ใน App.vue หรือสร้างใหม่)
+
     alert('เบิกสินค้าสำเร็จ!') // (ชั่วคราว)
     router.back() // กลับไปหน้า List
     
@@ -118,9 +125,7 @@ async function handleStockOut() {
   }
 }
 
-// --- (8) แก้ไข Cancel / Back (ให้ง่ายขึ้น) ---
 function goBack() {
-  // (ลบ `confirm` ที่อาจถูกบล็อก และ `isDirty` ที่พังแล้ว)
   router.back()
 }
 
@@ -128,17 +133,13 @@ onMounted(fetchLotDetails)
 </script>
 
 <template>
-  <!-- 
-    (Template เกือบเหมือนเดิม)
-    (เราแค่ "ลบ" ช่องกรอก "ชื่อพนักงาน" ออก)
-  -->
+
   <main class="stock-out-form-container">
     <div class="form-header">
       <button @click="goBack" class="back-button">&larr; ย้อนกลับ</button>
       <h1>ฟอร์มเบิกสินค้า (Stock-Out)</h1>
     </div>
 
-    <!-- (ข้อความ Error จะแสดงที่นี่) -->
     <div v-if="loading" class="loading-message">กำลังโหลดข้อมูล...</div>
     <div v-else-if="errorMessage" class="error-message">{{ errorMessage }}</div>
 
@@ -155,8 +156,6 @@ onMounted(fetchLotDetails)
       <fieldset>
         <legend>ข้อมูลการเบิก</legend>
 
-        <!-- --- (9) ลบช่องกรอก "ชื่อพนักงาน" ออกจากที่นี่ --- -->
-        <!-- <div class="form-group"> ... </div> -->
 
         <div class="form-group">
           <label for="quantity">จำนวนที่เบิก</label>
