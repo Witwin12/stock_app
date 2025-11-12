@@ -7,39 +7,39 @@ import LotDeleteButton from '@/components/DeleteTireLotButton.vue'
 const router = useRouter()
 const productId = useRoute().params.id
 
+// --- State ---
 const product = ref(null)
 const stockLots = ref([])
 const loading = ref(true)
 const error = ref(null)
+const isLoggedIn = ref(false)
 
+// --- ฟังก์ชันดึง Token + Headers ---
 function getAuthHeaders() {
   const token = localStorage.getItem('authToken')
-  if (!token) {
-    error.value = "คุณยังไม่ได้ล็อกอิน!"
-    return null
+  isLoggedIn.value = !!token
+  const headers = {}
+  if (token) {
+    headers['Authorization'] = `Token ${token}`
   }
-  return {
-    'Authorization': `Token ${token}`
-  }
+  return headers
 }
 
+// --- ดึงข้อมูลสินค้าและสต็อก ---
 async function fetchProductDetails() {
   try {
     loading.value = true
     const headers = getAuthHeaders()
-    if (!headers) {
-      loading.value = false
-      return
-    }
 
     const [productRes, stockRes] = await Promise.all([
       axios.get(`http://localhost:8000/api/tire-products/${productId}/`, { headers }),
       axios.get(`http://localhost:8000/api/tire-products/${productId}/stock_by_year/`, { headers })
     ])
+
     product.value = productRes.data
     stockLots.value = stockRes.data
-
   } catch (err) {
+    console.error('Error fetching product details:', err)
     if (err.response?.status === 401) {
       error.value = "คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้ (401)"
     } else {
@@ -50,18 +50,26 @@ async function fetchProductDetails() {
   }
 }
 
-//สร้างฟังก์ชันรับ emit 'delete-success'
-function onLotDeleted(deletedLotId) {
-  // ลบ Lot นั้นออกจาก Array (เพื่ออัปเดต UI)
-  stockLots.value = stockLots.value.filter(
-    lot => lot.lot_id !== deletedLotId
-  )
+// --- ตรวจสอบ login แล้วค่อยดึงข้อมูล ---
+function checkLoginAndFetch() {
+  const token = localStorage.getItem('authToken')
+  isLoggedIn.value = !!token
+  fetchProductDetails()
 }
 
+// --- ฟังก์ชันเมื่อ Lot ถูกลบ ---
+function onLotDeleted(deletedLotId) {
+  stockLots.value = stockLots.value.filter(lot => lot.lot_id !== deletedLotId)
+}
+
+// --- ปุ่มย้อนกลับ ---
 const goBack = () => router.back()
 
-onMounted(fetchProductDetails)
+// --- Lifecycle ---
+onMounted(checkLoginAndFetch)
 </script>
+
+
 
 <template>
  <div class="tire-detail-container">
@@ -86,7 +94,7 @@ onMounted(fetchProductDetails)
       <th>จำนวนรับเข้า</th>
       <th>จำนวนเบิกออก</th>
       <th>คงเหลือ</th>
-      <th>การดำเนินการ</th>
+      <th v-if="isLoggedIn" >การดำเนินการ</th>
      </tr>
     </thead>
     <tbody>
@@ -97,12 +105,13 @@ onMounted(fetchProductDetails)
       <td class="right">{{ lot.total_out }}</td>
       <td class="right"><strong>{{ lot.quantity_remaining }}</strong></td>
       
-            <td class="action-cell">
+            <td class="action-cell" v-if="isLoggedIn">
                      <RouterLink :to="`/stock-out-form/${lot.lot_id}`" class="stock-out-button">
                 เบิกออก
               </RouterLink>
 
-              <LotDeleteButton 
+              <LotDeleteButton
+                v-if="isLoggedIn" 
                 :lot-id="lot.lot_id"
                 endpoint-url="/api/tire-lots/"
                 @delete-success="onLotDeleted"

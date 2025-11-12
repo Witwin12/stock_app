@@ -9,6 +9,7 @@ const products = ref([])
 const error = ref(null)
 const searchText = ref('')
 const loading = ref(true)
+const isLoggedIn = ref(false)
 
 // --- Fetch Products ---
 async function fetchProducts(searchTerm = '') {
@@ -63,12 +64,10 @@ function onProductDeleted(deletedProductId) {
 // --- Lifecycle ---
 onMounted(() => {
   const token = localStorage.getItem('authToken')
-  if (!token) {
-    error.value = 'กรุณาเข้าสู่ระบบก่อนดูข้  อมูล'
-    loading.value = false
-  } else {
-    fetchProducts()
-  }
+
+  isLoggedIn.value = !!token  
+  
+  fetchProducts()
 })
 </script>
 
@@ -124,7 +123,8 @@ onMounted(() => {
        ดูสต็อก
       </RouterLink>
 
-      <DeleteButton 
+      <DeleteButton
+       v-if="isLoggedIn" 
        :product-id="product.product_id"
        endpoint-url="/api/tire-products/"
        @delete-success="onProductDeleted"
