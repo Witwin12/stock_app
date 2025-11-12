@@ -1,13 +1,26 @@
 <script setup>
-import TireProductList from '@/components/TireProductList.vue'
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import TireProductList from '@/components/TireProductList.vue'
+
+// สร้าง state สำหรับตรวจว่าล็อกอินอยู่ไหม
+const isLoggedIn = ref(false)
+
+onMounted(() => {
+  const token = localStorage.getItem('authToken')
+  isLoggedIn.value = !!token // ถ้ามี token = true
+})
 </script>
 
 <template>
   <main>
     <div class="page-header">
-      <!-- ปุ่มเพิ่มสินค้า -->
-      <RouterLink to="/stock-in" class="add-product-button">
+      <!-- ปุ่มเพิ่มสินค้า: แสดงเฉพาะเมื่อ login แล้ว -->
+      <RouterLink
+        v-if="isLoggedIn"
+        to="/stock-in"
+        class="add-product-button"
+      >
         เพิ่มสินค้าใหม่
       </RouterLink>
     </div>
