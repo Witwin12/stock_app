@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue'
-// (ลบ useRouter ออก เพราะเราจะใช้ window.location)
 import axios from 'axios'
 
 // --- State ---
@@ -9,7 +8,7 @@ const password = ref('')
 const errorMessage = ref(null)
 const isSubmitting = ref(false)
 
-// --- (นี่คือ Function ที่แก้ไขใหม่ทั้งหมด) ---
+// --- Function Login ---
 async function handleLogin() {
   isSubmitting.value = true
   errorMessage.value = null
@@ -22,41 +21,28 @@ async function handleLogin() {
   try {
     // --- ขั้นตอนที่ 1: POST ไปที่ /login/ เพื่อเอา "Key" ---
     const loginResponse = await axios.post('http://localhost:8000/api/auth/login/', payload)
-    
-    // (ถ้ามาถึงตรงนี้ = Login สำเร็จ)
+
     const token = loginResponse.data.key
-    
-    // (เก็บ Token ไว้ใน Headers สำหรับการยิงครั้งต่อไป)
-    const headers = {
-      'Authorization': `Token ${token}`
-    }
+    const headers = { 'Authorization': `Token ${token}` }
 
-    // --- ขั้นตอนที่ 2: GET ไปที่ /user/ (โดยใช้ Key) เพื่อเอา "User Data" ---
+    // --- ขั้นตอนที่ 2: GET /user/ ---
     const userResponse = await axios.get('http://localhost:8000/api/auth/user/', { headers })
-    
-    // (ถ้ามาถึงตรงนี้ = ได้ข้อมูล User สำเร็จ)
-    const userData = userResponse.data // นี่คือ { id: ..., role: ... }
+    const userData = userResponse.data
 
-    // --- ขั้นตอนที่ 3: บันทึก "ทั้งสองอย่าง" ลง localStorage ---
-    
-    // 1. บันทึก Key (Token)
+    // --- ขั้นตอนที่ 3: บันทึกข้อมูล ---
     localStorage.setItem('authToken', token)
-    
-    // 2. บันทึก User Data (ที่ตอนนี้เป็น JSON ที่ถูกต้อง)
     localStorage.setItem('userData', JSON.stringify(userData))
 
-    // 4. สั่งให้ Vue โหลดหน้าเว็บใหม่ (ไปที่หน้าหลัก)
-    //    (App.vue จะอ่านค่าใหม่นี้ และ JSON.parse จะไม่พังแล้ว!)
-    window.location.href = '/' 
+    // --- ไปหน้าแรก ---
+    window.location.href = '/'
 
   } catch (error) {
-    // 5. ถ้า Error (เช่น รหัสผิด หรือ 401)
     console.error('Login process failed:', error)
-    
-    if (error.response?.data?.non_field_errors) {
-      errorMessage.value = error.response.data.non_field_errors[0]
-    } else if (error.response?.status === 401) {
-        errorMessage.value = "Token ไม่ถูกต้อง (401)"
+
+    // --- ถ้าชื่อผู้ใช้หรือรหัสผ่านผิด ---
+    if (error.response?.status === 400 || error.response?.status === 401) {
+      errorMessage.value = 'ข้อมูลผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
+      password.value = '' // ล้างช่องรหัสออก
     } else {
       errorMessage.value = 'เกิดข้อผิดพลาดในการล็อกอิน (กรุณาลองใหม่)'
     }
@@ -66,7 +52,7 @@ async function handleLogin() {
 }
 </script>
 
-<template>
+<template> 
   <main class="login-container">
     <form @submit.prevent="handleLogin" class="login-form">
       <h1>เข้าสู่ระบบ</h1>
@@ -154,7 +140,14 @@ p {
   border-radius: 4px;
   font-size: 1rem;
   color: #000;
+  background-color: #fff; 
   box-sizing: border-box; 
+}
+
+.form-group input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 3px rgba(0, 123, 255, 0.4);
 }
 
 .submit-button {
@@ -163,7 +156,7 @@ p {
   font-size: 1.1rem;
   font-weight: bold;
   color: #fff;
-  background-color: #007bff; /* สีน้ำเงิน (เปลี่ยนได้) */
+  background-color: #007bff;
   border: none;
   border-radius: 5px;
   cursor: pointer;
