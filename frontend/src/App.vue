@@ -35,41 +35,63 @@ onMounted(() => {
 </script>
 
 <template>
-  <header class="app-header">
-    <div class="logo">
-      <RouterLink to="/">ระบบสต็อกยาง</RouterLink>
-    </div>
-    
-    <nav class="navigation">
-      </nav>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="logo">
+        <RouterLink to="/">ระบบสต็อกยาง</RouterLink>
+      </div>
 
-    <div class="auth-buttons">
-      
-      <template v-if="isLoggedIn">
-        <span class="welcome-user">
-          สวัสดี, {{ userData?.username }} ({{ userData?.role }})
-        </span>
-        <button @click="handleLogout" class="logout-button">
-          ออกจากระบบ
-        </button>
-      </template>
+      <nav class="navigation"></nav>
 
-      <template v-else>
-        <RouterLink to="/login" class="login-button">
-          เข้าสู่ระบบ
-        </RouterLink>
-      </template>
+      <div class="auth-buttons">
+        <template v-if="isLoggedIn">
+          <span class="welcome-user">
+            สวัสดี, {{ userData?.username }} ({{ userData?.role }})
+          </span>
+          <button @click="handleLogout" class="logout-button">
+            ออกจากระบบ
+          </button>
+        </template>
 
-    </div>
-  </header>
+        <template v-else>
+          <RouterLink to="/login" class="login-button">
+            เข้าสู่ระบบ
+          </RouterLink>
+        </template>
+      </div>
+    </header>
 
-  <div class="main-content">
-    <RouterView />
+    <main class="main-content">
+      <RouterView />
+    </main>
   </div>
-
 </template>
 
+<style>
+/* --------------------- GLOBAL --------------------- */
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  overflow-x: hidden; /* ป้องกันขอบขาวทางขวา */
+}
+
+* {
+  box-sizing: border-box; /* ป้องกัน element ด้านในล้นขนาด */
+}
+</style>
+
 <style scoped>
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* เต็มจอแนวตั้ง */
+  width: 100%;   /* เต็มจอแนวนอน */
+}
+
+/* Header ด้านบน */
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -78,6 +100,7 @@ onMounted(() => {
   background-color: #333;
   color: #fff;
   border-bottom: 2px solid #007bff;
+  flex-shrink: 0;
 }
 
 .logo a {
@@ -87,60 +110,14 @@ onMounted(() => {
   text-decoration: none;
 }
 
-.navigation a {
-  margin: 0 1rem;
-  color: #eee;
-  text-decoration: none;
-  font-size: 1rem;
-}
-.navigation a:hover {
-  color: #007bff;
-}
-
-.auth-buttons {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.welcome-user {
-  font-size: 0.9rem;
-  color: #ccc;
-}
-
-/* ปุ่ม Login (ที่เป็น Link) */
-.login-button {
-  padding: 0.5rem 1rem;
-  background-color: #007bff;
-  color: #fff;
-  text-decoration: none;
-  border-radius: 4px;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-.login-button:hover {
-  background-color: #0056b3;
-}
-
-/* ปุ่ม Logout (ที่เป็น button) */
-.logout-button {
-  padding: 0.5rem 1rem;
-  background-color: #dc3545;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-weight: 500;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.2s;
-}
-.logout-button:hover {
-  background-color: #c82333;
-}
-
+/* ส่วนเนื้อหา (RouterView) */
 .main-content {
+  flex: 1;
   width: 100%;
+  max-width: 100vw; /* ป้องกันล้นขอบแนวนอน */
   height: 100%;
   padding: 2rem;
+  background-color: #ffffff;
+  overflow-y: auto;
 }
 </style>

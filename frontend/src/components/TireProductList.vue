@@ -93,189 +93,206 @@ onMounted(() => {
 </script>
 
 <template>
- <div class="tire-stock-container">
-  <h1 class="page-title">รายการสต็อกยาง</h1>
+  <div class="tire-stock-container">
+    <h1 class="page-title">รายการสต็อกยาง</h1>
 
-  <div class="search-container">
-    <input 
-      v-model="searchText"
-      @keyup.enter="triggerSearch"
-      type="text"
-      placeholder="ค้นหา (ยี่ห้อ, ลาย, หรือขนาด)"
-    />
-    <button @click="triggerSearch">ค้นหา</button>
-    <button @click="clearSearch" class="button-clear">ล้าง</button>
-  </div>
+    <div class="search-container">
+      <input
+        v-model="searchText"
+        @keyup.enter="triggerSearch"
+        type="text"
+        placeholder="ค้นหา (ยี่ห้อ, ลาย, หรือขนาด)"
+      />
+      <button @click="triggerSearch">ค้นหา</button>
+      <button @click="clearSearch" class="button-clear">ล้าง</button>
+    </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>ยี่ห้อ</th>
-        <th>ลายดอกยาง</th>
-        <th>ขนาด</th>
-        <th>คงเหลือ</th>
-        <th>สถานะ</th>
-        <th class="header-actions">การดำเนินการ</th>
-      </tr>
-    </thead>
+    <div class="table-scroll-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ยี่ห้อ</th>
+            <th>ลายดอกยาง</th>
+            <th>ขนาด</th>
+            <th>คงเหลือ</th>
+            <th>สถานะ</th>
+            <th class="header-actions">การดำเนินการ</th>
+          </tr>
+        </thead>
 
-    <tbody>
-      <tr v-if="products.length === 0">
-        <td colspan="6" class="no-data">ไม่พบข้อมูลสินค้า</td>
-      </tr>
+        <tbody>
+          <tr v-if="products.length === 0">
+            <td colspan="6" class="no-data">ไม่พบข้อมูลสินค้า</td>
+          </tr>
 
-      <tr
-        v-for="product in products"
-        :key="product.product_id"
-        :class="{ 'out-of-stock': !product.is_active }"
-      >
-        <td>{{ product.brand }}</td>
-        <td>{{ product.pattern }}</td>
-        <td>{{ product.size }}</td>
-        <td class="right">{{ product.total_stock_on_hand }}</td>
-
-        <td class="status-cell">
-          <span :class="product.is_active ? 'status-in' : 'status-out'">
-            {{ product.stock_status }}
-          </span>
-        </td>
-
-        <td class="actions">
-          <!-- ปุ่มดูรายละเอียด -->
-          <RouterLink 
-            :to="`/product/${product.product_id}`"
-            class="button-detail"
+          <tr
+            v-for="product in products"
+            :key="product.product_id"
+            :class="{ 'out-of-stock': !product.is_active }"
           >
-            ดูสต็อก
-          </RouterLink>
+            <td>{{ product.brand }}</td>
+            <td>{{ product.pattern }}</td>
+            <td>{{ product.size }}</td>
+            <td class="right">{{ product.total_stock_on_hand }}</td>
 
-          <!-- ปุ่มลบ: แสดงเฉพาะเมื่อเป็น admin -->
-          <DeleteButton
-            v-if="isAdmin"
-            :product-id="product.product_id"
-            endpoint-url="/api/tire-products/"
-            :is-admin="isAdmin"
-            @delete-success="onProductDeleted"
-          />
-        </td>
-      </tr>
-    </tbody>
-  </table>
- </div>
+            <td class="status-cell">
+              <span :class="product.is_active ? 'status-in' : 'status-out'">
+                {{ product.stock_status }}
+              </span>
+            </td>
+
+            <td class="actions">
+              <RouterLink
+                :to="`/product/${product.product_id}`"
+                class="button-detail"
+              >
+                ดูสต็อก
+              </RouterLink>
+
+              <DeleteButton
+                v-if="isAdmin"
+                :product-id="product.product_id"
+                endpoint-url="/api/tire-products/"
+                :is-admin="isAdmin"
+                @delete-success="onProductDeleted"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+  </div>
 </template>
 
 <style scoped>
 .tire-stock-container {
- font-family: sans-serif;
- color: #000;
+  font-family: sans-serif;
+  color: #000;
 }
 
 /* ===== Title ===== */
 .page-title {
- text-align: center;
- font-size: 1.8rem;
- font-weight: bold;
- margin-bottom: 1.5rem;
- color: #000;
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: #000;
 }
 
 /* ===== Search Box ===== */
 .search-container {
- display: flex;
- gap: 0.5rem;
- margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .search-container input {
- flex-grow: 1;
- padding: 10px;
- font-size: 1rem;
- border: 1px solid #ccc;
- border-radius: 4px;
- background-color: #fff;
- color: #000;
+  flex-grow: 1;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #000;
 }
 
 .search-container button {
- padding: 10px 20px;
- font-size: 1rem;
- font-weight: bold;
- color: #fff;
- border: none;
- border-radius: 4px;
- cursor: pointer;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .search-container button:hover {
- opacity: 0.9;
+  opacity: 0.9;
 }
 
 .search-container button:not(.button-clear) {
- background-color: #007bff;
+  background-color: #007bff;
 }
 
 .search-container .button-clear {
- background-color: #6c757d;
+  background-color: #6c757d;
 }
 
 /* ===== Table ===== */
-table {
- width: 100%;
- border-collapse: collapse;
- margin-top: 1rem;
- color: #000;
+
+/* 2. [เพิ่ม] สไตล์สำหรับกรอบที่ห่อตาราง */
+.table-scroll-container {
+  max-height: 300px; /*  คุณสามารถปรับความสูงนี้ได้ตามต้องการ */
+  overflow-y: auto;  /*  เพิ่ม scrollbar เมื่อเนื้อหาล้น */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 1rem;
 }
 
-th, td {
- border: 1px solid #ddd;
- padding: 12px;
- text-align: left;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #000;
+  /* * ไม่จำเป็นต้องมี margin-top ที่นี่แล้ว 
+    * เพราะเราย้ายไปไว้ที่ .table-scroll-container
+    */
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
 }
 
 thead {
- background-color: #f4f4f4;
+  background-color: #f4f4f4;
+
+  /* 3. [เพิ่ม] ทำให้หัวตาราง "ติดหนึบ" */
+  position: sticky;
+  top: 0;
+  z-index: 1; /*  เพื่อให้หัวตารางอยู่เหนือเนื้อหา (tbody) เสมอ */
 }
 
 td.right {
- text-align: right;
- font-weight: bold;
+  text-align: right;
+  font-weight: bold;
 }
 
 .no-data {
- text-align: center;
- color: #777;
- font-style: italic;
+  text-align: center;
+  color: #777;
+  font-style: italic;
 }
 
 th.header-actions {
- text-align: center;
+  text-align: center;
 }
 
 /* ===== Action Buttons ===== */
 .actions {
- display: flex;
- gap: 0.5rem;
- justify-content: center;
- align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
 }
 
 .button-detail {
- display: inline-block;
- background-color: #007bff;
- color: white;
- padding: 8px 12px;
- border-radius: 4px;
- text-decoration: none;
- font-weight: bold;
- font-size: 0.9em;
- transition: background-color 0.2s;
+  display: inline-block;
+  background-color: #007bff;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
 }
 
 .button-detail:hover {
- background-color: #0056b3;
+  background-color: #0056b3;
 }
-
-/* ===== (START) สไตล์ที่เพิ่มใหม่ ===== */
 
 /* 1. สไตล์สำหรับแถวที่ "ของหมด" */
 tr.out-of-stock {
@@ -302,6 +319,4 @@ td.status-cell {
 .status-out {
   color: #dc3545; /* สีแดง */
 }
-/* ===== (END) สไตล์ที่เพิ่มใหม่ ===== */
-
 </style>

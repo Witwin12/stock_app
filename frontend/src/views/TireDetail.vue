@@ -72,59 +72,68 @@ onMounted(checkLoginAndFetch)
 
 
 <template>
- <div class="tire-detail-container">
-  
+  <div class="tire-detail-container">
     <div v-if="loading">กำลังโหลดข้อมูล...</div>
-  
+
     <div v-else-if="error" class="error-message">{{ error }}</div>
 
-      <template v-else-if="product">
-   <h1>{{ product.brand }} {{ product.pattern }}</h1>
-   <h2>ขนาด: {{ product.size }}</h2>
-   <hr />
-   <h3>รายละเอียดสต็อก (ตามล็อต)</h3>
+    <template v-else-if="product">
+      <h1>{{ product.brand }} {{ product.pattern }}</h1>
+      <h2>ขนาด: {{ product.size }}</h2>
+      <hr />
+      <h3>รายละเอียดสต็อก (ตามล็อต)</h3>
 
-   <div v-if="!stockLots.length" class="no-stock">* ไม่พบข้อมูลสต็อก *</div>
+      <div v-if="!stockLots.length" class="no-stock">
+        * ไม่พบข้อมูลสต็อก *
+      </div>
 
-         <table v-else>
-    <thead>
-     <tr>
-      <th>ปีผลิต</th>
-      <th>วันที่รับเข้า</th>
-      <th>จำนวนรับเข้า</th>
-      <th>จำนวนเบิกออก</th>
-      <th>คงเหลือ</th>
-      <th v-if="isLoggedIn" >การดำเนินการ</th>
-     </tr>
-    </thead>
-    <tbody>
-     <tr v-for="lot in stockLots" :key="lot.lot_id">
-      <td>{{ lot.year_manufactured }}</td>
-      <td>{{ lot.date_in }}</td>
-      <td class="right">{{ lot.quantity_in }}</td>
-      <td class="right">{{ lot.total_out }}</td>
-      <td class="right"><strong>{{ lot.quantity_remaining }}</strong></td>
-      
-            <td class="action-cell" v-if="isLoggedIn">
-                     <RouterLink :to="`/stock-out-form/${lot.lot_id}`" class="stock-out-button">
-                เบิกออก
-              </RouterLink>
+      <div v-else class="table-scroll-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ปีผลิต</th>
+              <th>วันที่รับเข้า</th>
+              <th>จำนวนรับเข้า</th>
+              <th>จำนวนเบิกออก</th>
+              <th>คงเหลือ</th>
+              <th v-if="isLoggedIn">การดำเนินการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="lot in stockLots" :key="lot.lot_id">
+              <td>{{ lot.year_manufactured }}</td>
+              <td>{{ lot.date_in }}</td>
+              <td class="right">{{ lot.quantity_in }}</td>
+              <td class="right">{{ lot.total_out }}</td>
+              <td class="right">
+                <strong>{{ lot.quantity_remaining }}</strong>
+              </td>
 
-              <LotDeleteButton
-                v-if="isLoggedIn" 
-                :lot-id="lot.lot_id"
-                endpoint-url="/api/tire-lots/"
-                @delete-success="onLotDeleted"
-              />
-      </td>
-     </tr>
-    </tbody>
-   </table>
-  </template>
+              <td class="action-cell" v-if="isLoggedIn">
+                <RouterLink
+                  :to="`/stock-out-form/${lot.lot_id}`"
+                  class="stock-out-button"
+                >
+                  เบิกออก
+                </RouterLink>
 
-      <button @click="goBack" class="back-button">&larr; ย้อนกลับ</button>
- </div>
+                <LotDeleteButton
+                  v-if="isLoggedIn"
+                  :lot-id="lot.lot_id"
+                  endpoint-url="/api/tire-lots/"
+                  @delete-success="onLotDeleted"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
+
+    <button @click="goBack" class="back-button">&larr; ย้อนกลับ</button>
+  </div>
 </template>
+
 <style scoped>
 .tire-detail-container {
   font-family: sans-serif;
@@ -142,15 +151,29 @@ onMounted(checkLoginAndFetch)
   margin-top: 1rem;
 }
 
+/*  สไตล์สำหรับกรอบที่ห่อตาราง */
+.table-scroll-container {
+  max-height: 300px; /* กำหนดความสูงสูงสุด, ปรับค่านี้ได้ */
+  overflow-y: auto;  /* เพิ่ม scrollbar แนวตั้งเมื่อข้อมูลล้น */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 1rem; /* 👈 ย้าย margin-top จาก table มาไว้ที่นี่ */
+}
+
 /* Table styling */
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem;
+  /*  margin-top: 1rem; (ย้ายไปไว้ที่ .table-scroll-container) */
 }
 
 thead {
   background-color: #f4f4f4;
+
+  /* 4. [เพิ่ม] ทำให้หัวตาราง "ติดหนึบ" */
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 th,
@@ -159,7 +182,7 @@ td {
   padding: 12px;
   text-align: left;
   color: #000;
-  vertical-align: middle; 
+  vertical-align: middle;
 }
 
 td.right {
@@ -186,7 +209,7 @@ td strong {
   font-size: 0.9em;
   font-weight: bold;
   color: #fff;
-  background-color: #dc3545; 
+  background-color: #dc3545;
   border: none;
   border-radius: 4px;
   text-decoration: none;
@@ -195,7 +218,7 @@ td strong {
 }
 
 .stock-out-button:hover {
-  background-color: #c82333; 
+  background-color: #c82333;
 }
 
 /* Back button */
