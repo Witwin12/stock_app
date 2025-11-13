@@ -137,7 +137,7 @@ onMounted(fetchLotDetails)
   <main class="stock-out-form-container">
     <div class="form-header">
       <button @click="goBack" class="back-button">&larr; ย้อนกลับ</button>
-      <h1>ฟอร์มเบิกสินค้า (Stock-Out)</h1>
+      <h1>ฟอร์มเบิกสินค้า </h1>
     </div>
 
     <div v-if="loading" class="loading-message">กำลังโหลดข้อมูล...</div>
@@ -145,7 +145,7 @@ onMounted(fetchLotDetails)
 
     <form v-if="lotDetails" @submit.prevent="handleStockOut" class="stock-out-form">
       <fieldset class="lot-details">
-        <legend>รายละเอียดล็อต (Lot ID: {{ lotId }})</legend>
+        <legend>รายละเอียดล็อต</legend>
         <h3>{{ lotDetails.product.brand }} {{ lotDetails.product.pattern }}</h3>
         <p><strong>ขนาด:</strong> {{ lotDetails.product.size }}</p>
         <p><strong>ปีผลิต:</strong> {{ lotDetails.year_manufactured }}</p>
@@ -191,7 +191,6 @@ onMounted(fetchLotDetails)
 
 <style scoped>
 .stock-out-form-container {
- max-width: 800px;
  margin: 2rem auto;
  padding: 2rem;
  border-radius: 8px;

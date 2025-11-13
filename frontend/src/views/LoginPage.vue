@@ -68,7 +68,7 @@ async function handleLogin() {
           id="username" 
           v-model="username" 
           type="text" 
-          placeholder="ระบุ Username" 
+          placeholder="Username" 
           required 
         />
       </div>
@@ -79,7 +79,7 @@ async function handleLogin() {
           id="password" 
           v-model="password" 
           type="password" 
-          placeholder="ระบุ Password" 
+          placeholder="Password" 
           required 
         />
       </div>

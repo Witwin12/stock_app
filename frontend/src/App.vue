@@ -38,7 +38,7 @@ onMounted(() => {
   <div class="app-container">
     <header class="app-header">
       <div class="logo">
-        <RouterLink to="/">ระบบสต็อกยาง</RouterLink>
+        <RouterLink to="/">TireStock</RouterLink>
       </div>
 
       <nav class="navigation"></nav>
@@ -75,11 +75,11 @@ html, body, #app {
   width: 100%;
   height: 100%;
   background-color: #ffffff;
-  overflow-x: hidden; /* ป้องกันขอบขาวทางขวา */
+  overflow-x: hidden; /* ป้องกัน scroll แนวนอน */
 }
 
 * {
-  box-sizing: border-box; /* ป้องกัน element ด้านในล้นขนาด */
+  box-sizing: border-box;
 }
 </style>
 
@@ -87,8 +87,9 @@ html, body, #app {
 .app-container {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* เต็มจอแนวตั้ง */
-  width: 100%;   /* เต็มจอแนวนอน */
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* Header ด้านบน */
@@ -100,24 +101,15 @@ html, body, #app {
   background-color: #333;
   color: #fff;
   border-bottom: 2px solid #007bff;
-  flex-shrink: 0;
 }
 
-.logo a {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #fff;
-  text-decoration: none;
-}
-
-/* ส่วนเนื้อหา (RouterView) */
+/* เนื้อหาหลัก */
 .main-content {
   flex: 1;
   width: 100%;
-  max-width: 100vw; /* ป้องกันล้นขอบแนวนอน */
-  height: 100%;
+  height: calc(100vh - 70px); /* ปรับตามความสูง header */
   padding: 2rem;
-  background-color: #ffffff;
+  background-color: #f4f7f6;
   overflow-y: auto;
 }
 </style>

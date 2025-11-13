@@ -13,56 +13,60 @@ onMounted(() => {
 </script>
 
 <template>
-  <main>
-    <div class="page-header">
-      <!-- ปุ่มเพิ่มสินค้า: แสดงเฉพาะเมื่อ login แล้ว -->
-      <RouterLink
-        v-if="isLoggedIn"
-        to="/stock-in"
-        class="add-product-button"
-      >
-        เพิ่มสินค้าใหม่
-      </RouterLink>
-    </div>
-
-    <!-- แสดงรายการสินค้า -->
-    <TireProductList />
-  </main>
+  <div class="page-container">
+    <main>
+      <div class="page-header">
+        <RouterLink
+          v-if="isLoggedIn"
+          to="/stock-in"
+          class="add-product-button"
+        >
+          เพิ่มสินค้าใหม่
+        </RouterLink>
+      </div>
+      <TireProductList />
+    </main>
+  </div>
 </template>
 
-<style>
-html, body {
+
+<style scoped>
+.page-container {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
+  background-color: #fff;
+  padding: 0;
   margin: 0;
-  background-color: white;
-  
+  overflow-x: hidden;
 }
+
 main {
-  padding: 1rem;
+  box-sizing: border-box;
+  background-color: #fff;
 }
 
 .page-header {
-  margin-bottom: 1.5rem; /* เว้นระยะห่างระหว่างปุ่มกับ list */
+  margin-bottom: 1.5rem;
   padding-bottom: 1.5rem;
   border-bottom: 1px solid #e0e0e0;
 }
- /*เพิ่ม style สำหรับปุ่ม */
+
+/* ปุ่มเพิ่มสินค้า */
 .add-product-button {
   display: inline-block;
   padding: 10px 20px;
   font-size: 1rem;
   font-weight: bold;
   color: #fff;
-  background-color: #007bff; /* สีน้ำเงิน (เปลี่ยนได้) */
+  background-color: #007bff;
   border: none;
   border-radius: 5px;
-  text-decoration: none; /* เอาขีดเส้นใต้ของลิงก์ออก */
+  text-decoration: none;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .add-product-button:hover {
-  background-color: #0056b3; /* สีเข้มขึ้นตอนชี้ */
+  background-color: #0056b3;
 }
 </style>
