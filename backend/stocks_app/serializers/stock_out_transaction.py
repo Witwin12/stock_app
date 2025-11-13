@@ -1,95 +1,63 @@
 from rest_framework import serializers
-from ..models import StockOutTransaction ,Employee
+from ..models import StockOutTransaction, Employee
 from .tire_product import TireProductSerializer
 
+
 class StockOutTransactionSerializer(serializers.ModelSerializer):
-    
-    # --- การแสดงผล ForeignKey ให้อ่านง่าย ---
-    
-    # ดึงค่า __str__ จาก `TireLot`
+    """Serializer สำหรับการเบิกยางออกจากสต็อก"""
+
+    # --- แสดงค่า ForeignKey ให้อ่านง่าย ---
     lot_display = serializers.StringRelatedField(source='lot', read_only=True)
-    
-    # ดึงค่า 'username' จาก `Employee` ที่เชื่อมโยงอยู่
     employee = serializers.SlugRelatedField(
-        slug_field='username',  
+        slug_field='username',
         queryset=Employee.objects.all()
     )
-
-    product = TireProductSerializer(source = 'lot.product',read_only=True)
-    #แสดงยอดคงเหลือของล็อต (ณ ก่อนเบิก) เพื่อให้ Response ชัดเจน
+    product = TireProductSerializer(source='lot.product', read_only=True)
     lot_remaining_before_txn = serializers.ReadOnlyField(source='lot.quantity_remaining')
 
     class Meta:
         model = StockOutTransaction
+        read_only_fields = ['transaction_id']
         fields = [
             'transaction_id',
-            
-            # --- 2. Fields สำหรับ Input (Write) ---
-            'lot',                # นี่คือ Input: User ต้องส่ง 'lot_id' ที่จะเบิก
-            'employee',           # นี่คือ Input: User ต้องส่ง 'employee_id'
+            'lot',
+            'employee',
             'date_out',
             'quantity_out',
             'remarks',
-            
-            # --- 3. Fields สำหรับ Output (Read-only) ---
-            'product',            # (แสดงผล)
-            'lot_display',        # (แสดงผล)ป
-            'lot_remaining_before_txn' # (แสดงผล)
-            ]
-        read_only_fields = ['transaction_id']
+            'product',
+            'lot_display',
+            'lot_remaining_before_txn',
+        ]
 
+    # --- Validation ---
     def validate_quantity_out(self, value):
-        """
-        ตรวจสอบว่า 'จำนวนที่เบิก' ต้องมากกว่า 0
-        """
         if value <= 0:
             raise serializers.ValidationError("จำนวนที่เบิกออกต้องมากกว่า 0")
         return value
 
     def validate(self, data):
-        """
-        ตรวจสอบ Logic โดยรวม:
-        - จำนวนที่เบิก (quantity_out) ต้องไม่เกินยอดคงเหลือ (quantity_remaining) 
-        - ของ 'lot' ที่ระบุมา
-        """
-        
-        lot_object = data.get('lot')
-        quantity_to_stock_out = data.get('quantity_out')
+        lot = data.get('lot')
+        qty_out = data.get('quantity_out')
 
-        if lot_object and quantity_to_stock_out:
-            
-            # 1. ดึงยอดคงเหลือจาก @property ของ Model
-            remaining_stock = lot_object.quantity_remaining
-            
-            # 2. ตรวจสอบ
-            if quantity_to_stock_out > remaining_stock:
-                raise serializers.ValidationError(
-                    f"เบิกออก ({quantity_to_stock_out} เส้น) เกินจำนวนคงเหลือ ({remaining_stock} เส้น) ของล็อตนี้"
-                )
-                
+        if not lot or not qty_out:
+            return data
+
+        remaining = lot.quantity_remaining
+        if qty_out > remaining:
+            raise serializers.ValidationError(
+                f"เบิกออก {qty_out} เส้น เกินจำนวนคงเหลือ {remaining} เส้น ของล็อตนี้"
+            )
         return data
-    
+
+    # --- Create Logic ---
     def create(self, validated_data):
-        """
-        Override เมธอด create
-        เพื่อเพิ่ม Logic ตรวจสอบสต็อกหลังเบิกออก
-        """
-        
-        # 1. สร้าง Transaction (เบิกออก) ตามปกติ
-        #    (บันทึกลง DB)
         transaction = super().create(validated_data)
-        
-        # 2. ดึง Product ที่เกี่ยวข้อง
-        #    validated_data['lot'] คือ <TireLot object>
-        product = validated_data['lot'].product 
+        product = validated_data['lot'].product
 
-        # 3. ตรวจสอบสต็อกคงเหลือ *หลังจาก* บันทึก transaction นี้
-
+        # ถ้าสต็อกสินค้าหมดให้ปิดการใช้งานสินค้า
         if product.total_stock_on_hand == 0:
-            
-            # 4. ถ้าสต็อกเป็น 0 ให้ตั้งค่า is_active = False
             product.is_active = False
-            product.save()
-            
-        # 5. ส่ง transaction กลับไป
+            product.save(update_fields=['is_active'])
+
         return transaction
