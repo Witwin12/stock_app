@@ -1,7 +1,6 @@
 # --- General & Environment ---
 # Environment variables (สำคัญมาก)
 .env
-.env.*
 *.env
 *.local
 
