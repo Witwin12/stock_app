@@ -1,44 +1,15 @@
 <script setup>
-import { ref, onMounted } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
 
-// --- Auth State ---
-const isLoggedIn = ref(false)
-const userData = ref(null)
-
-// --- Functions ---
-function handleLogout() {
-  // ลบ Token และ ข้อมูล User ออกจากหน่วยความจำ
-  localStorage.removeItem('authToken')
-  localStorage.removeItem('userData')
-
-  // สั่งโหลดหน้าเว็บใหม่
-  window.location.href = '/' // กลับไปหน้าหลัก (ซึ่งตอนนี้จะกลายเป็นสถานะ Logout)
-}
-
-// --- Lifecycle ---
-// onMounted() จะทำงาน 1 ครั้ง ตอน Component โหลดเสร็จ
-onMounted(() => {
-  // ตรวจสอบว่ามี Token ล็อกอินค้างอยู่หรือไม่
-  const token = localStorage.getItem('authToken')
-  const userJson = localStorage.getItem('userData')
-  
-  if (token && userJson) {
-    isLoggedIn.value = true
-    userData.value = JSON.parse(userJson)
-    console.log('User is logged in:', userData.value)
-  } else {
-    isLoggedIn.value = false
-    console.log('User is not logged in.')
-  }
-})
+const { isLoggedIn, userData, logout } = useAuth()
 </script>
 
 <template>
   <div class="app-container">
     <header class="app-header">
       <div class="logo">
-        <RouterLink to="/">TireStock</RouterLink>
+        <RouterLink to="/">ระบบสต็อกยาง</RouterLink>
       </div>
 
       <nav class="navigation"></nav>
@@ -48,7 +19,7 @@ onMounted(() => {
           <span class="welcome-user">
             สวัสดี, {{ userData?.username }} ({{ userData?.role }})
           </span>
-          <button @click="handleLogout" class="logout-button">
+          <button @click="logout" class="logout-button">
             ออกจากระบบ
           </button>
         </template>
@@ -109,7 +80,7 @@ html, body, #app {
   width: 100%;
   height: calc(100vh - 70px); /* ปรับตามความสูง header */
   padding: 2rem;
-  background-color: #f4f7f6;
+  background-color: #ffffff;
   overflow-y: auto;
 }
 </style>

@@ -1,70 +1,58 @@
 <script setup>
-import axios from 'axios'
+import api from '@/api/axios'
+import { useAuth } from '@/composables/useAuth'
 
-// 1. รับ productId และ endpoint มาจาก Parent
+// --- รับ props จาก parent ---
 const props = defineProps({
   productId: {
     type: [Number, String],
     required: true
   },
-  //ทำให้ใช้ลบอย่างอื่นได้ด้วย
   endpointUrl: {
     type: String,
-    required: true // เช่น /api/tire-products/
-  },
-  isAdmin: {
-    type: Boolean,
-    default: false
+    required: true
   }
 })
 
-// 2. สร้าง 'emit' เพื่อส่งสัญญาณบอก Parent ว่าลบสำเร็จ
+// --- ใช้ useAuth() เพื่อดึงข้อมูล user ---
+const { userData, isLoggedIn } = useAuth()
+
+// --- emit event กลับไปเมื่อสำเร็จ ---
 const emit = defineEmits(['delete-success'])
 
-// 3. ฟังก์ชันสำหรับลบ
 async function handleDelete() {
-  // 3.1. ถามยืนยัน
- const confirmed = confirm(
-    '!!! ยืนยันการลบถาวร !!!\nข้อมูลนี้จะหายไปจากฐานข้อมูลอย่างถาวรและกู้คืนไม่ได้ คุณแน่ใจหรือไม่?'
-  )
-  if (!confirmed) return
-// 3.2. [เพิ่ม] ดึง Token มาจาก localStorage
-  const token = localStorage.getItem('authToken')
+  if (!confirm('ยืนยันการลบถาวร?\nข้อมูลนี้จะหายไปอย่างถาวรและกู้คืนไม่ได้')) return
 
-  // 3.3. [เพิ่ม] ตรวจสอบว่ามี Token หรือไม่
-  if (!token) {
-    alert('ไม่พบข้อมูลการยืนยันตัวตน, กรุณาล็อกอินใหม่')
+  if (!isLoggedIn.value) {
+    alert('กรุณาเข้าสู่ระบบก่อนทำรายการนี้')
     return
   }
 
-  // 3.4. [เพิ่ม] สร้าง headers
-  const headers = {
-    Authorization: `Token ${token}`
+  if (userData.value?.role !== 'admin') {
+    alert('คุณไม่มีสิทธิ์ในการลบข้อมูลนี้')
+    return
   }
-  try {
-    // 4.2. ยิง DELETE request (ไม่ใช่ PATCH และไม่ต้องมี body)
-    await axios.delete(
-      `http://localhost:8000${props.endpointUrl}${props.productId}/`,{ headers: headers }
-    )
-    
-    // 4.3. ส่งสัญญาณ 'delete-success' บอก Parent
-    emit('delete-success', props.productId)
 
+  try {
+    await api.delete(`${props.endpointUrl}${props.productId}/`)
+    emit('delete-success', props.productId)
   } catch (err) {
     console.error('Error hard deleting item:', err)
-    
-    // 4.4. ดักจับ Error หากไม่ใช่ Admin (เผื่อไว้)
-    if (err.response && err.response.status === 403) {
-      alert('คุณไม่มีสิทธิ์ในการลบข้อมูลนี้')
-    } else {
-      alert('เกิดข้อผิดพลาด: ไม่สามารถลบถาวรได้')
-    }
+    const msg = err.response?.status === 403
+      ? 'คุณไม่มีสิทธิ์ในการลบข้อมูลนี้'
+      : 'เกิดข้อผิดพลาด: ไม่สามารถลบถาวรได้'
+    alert(msg)
   }
 }
 </script>
 
 <template>
-  <button @click="handleDelete" class="button-delete" v-if="isAdmin">
+  <!-- แสดงเฉพาะเมื่อเป็นแอดมิน -->
+  <button
+    v-if="userData?.role === 'admin'"
+    @click="handleDelete"
+    class="button-delete"
+  >
     ลบ
   </button>
 </template>

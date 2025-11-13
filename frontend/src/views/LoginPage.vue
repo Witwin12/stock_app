@@ -1,50 +1,23 @@
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import { useAuth } from '@/composables/useAuth'
 
-// --- State ---
+const { login } = useAuth()
 const username = ref('')
 const password = ref('')
-const errorMessage = ref(null)
+const errorMessage = ref('')
 const isSubmitting = ref(false)
 
-// --- Function Login ---
 async function handleLogin() {
-  isSubmitting.value = true
-  errorMessage.value = null
-
-  const payload = {
-    username: username.value,
-    password: password.value
-  }
-
   try {
-    // --- ขั้นตอนที่ 1: POST ไปที่ /login/ เพื่อเอา "Key" ---
-    const loginResponse = await axios.post('http://localhost:8000/api/auth/login/', payload)
-
-    const token = loginResponse.data.key
-    const headers = { 'Authorization': `Token ${token}` }
-
-    // --- ขั้นตอนที่ 2: GET /user/ ---
-    const userResponse = await axios.get('http://localhost:8000/api/auth/user/', { headers })
-    const userData = userResponse.data
-
-    // --- ขั้นตอนที่ 3: บันทึกข้อมูล ---
-    localStorage.setItem('authToken', token)
-    localStorage.setItem('userData', JSON.stringify(userData))
-
-    // --- ไปหน้าแรก ---
-    window.location.href = '/'
-
+    isSubmitting.value = true
+    await login(username.value, password.value)
   } catch (error) {
-    console.error('Login process failed:', error)
-
-    // --- ถ้าชื่อผู้ใช้หรือรหัสผ่านผิด ---
-    if (error.response?.status === 400 || error.response?.status === 401) {
-      errorMessage.value = 'ข้อมูลผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
-      password.value = '' // ล้างช่องรหัสออก
+    console.error(error)
+    if (error.response?.status === 400) {
+      errorMessage.value = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
     } else {
-      errorMessage.value = 'เกิดข้อผิดพลาดในการล็อกอิน (กรุณาลองใหม่)'
+      errorMessage.value = 'เกิดข้อผิดพลาดในการล็อกอิน'
     }
   } finally {
     isSubmitting.value = false
@@ -79,7 +52,7 @@ async function handleLogin() {
           id="password" 
           v-model="password" 
           type="password" 
-          placeholder="Password" 
+          placeholder="ระบุ Password" 
           required 
         />
       </div>
