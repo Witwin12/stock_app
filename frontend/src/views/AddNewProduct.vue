@@ -164,7 +164,7 @@ legend {
  margin-bottom: 0.5rem;
   color: #000;
 }
-.form-group input {
+.form-group input:not([type="date"]) {
  padding: 0.75rem;
  border: 1px solid #ccc;
  border-radius: 4px;
@@ -172,6 +172,18 @@ legend {
  color: #000;
  background-color: #fff;
   box-sizing: border-box; /* เพิ่มเพื่อคุม layout input */
+}
+
+.form-group input[type="date"] {
+padding: 0.75rem;
+border: 1px solid #ccc;
+border-radius: 4px;
+font-size: 1rem;
+color: #000;
+background-color: #fff;
+box-sizing: border-box;
+font-family: sans-serif; 
+color-scheme: light;
 }
 
 /* --- 3. Button Styling (from image d44ba8.png) --- */
