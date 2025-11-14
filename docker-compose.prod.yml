@@ -26,6 +26,8 @@ services:
       - db
     expose:
       - "8000"
+    volumes:
+      - django_static:/app/staticfiles
 
   frontend:
     build:
@@ -36,6 +38,8 @@ services:
       - "80:80"
     depends_on:
       - backend
-
+    volumes:
+      - django_static:/usr/share/nginx/html/static
 volumes:
   postgres_data:
+  django_static:
