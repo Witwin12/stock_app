@@ -88,7 +88,6 @@ docker compose up --build
 |--------|-----|
 | Django API | http://localhost:8000 |
 | Vue Frontend | http://localhost:5173 |
-| PostgreSQL | localhost:5432 |
 
 
 
@@ -96,4 +95,16 @@ docker compose up --build
 ```
 docker compose down --volumes
 ```
+
+## สำหรับ production 
+```
+docker compose -f docker-compose.prod.yml --env-file .env.prod up --build -d
+```
+
+ เปิดเว็บใช้งาน
+
+| Service | URL |
+|--------|-----|
+|Web | http://localhost |
+|AdminPage | http://localhost/admin |
 
