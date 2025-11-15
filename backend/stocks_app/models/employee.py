@@ -19,9 +19,10 @@ class Employee(AbstractUser):
     name = models.CharField(max_length=255, blank=True)
 
     def save(self, *args, **kwargs):
-        if self.role == self.Role.ADMIN:
+        if self.is_superuser or self.role == self.Role.ADMIN:
             self.is_staff = True
             self.is_superuser = True
+            self.role = self.Role.ADMIN
         else:
             self.is_staff = False
             self.is_superuser = False
