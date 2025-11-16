@@ -109,7 +109,7 @@ onMounted(checkLoginAndFetch)
             <tr>
               <th>ปีผลิต</th>
               <th>วันที่รับเข้า</th>
-              <th>ราคาทุน</th>
+              <th>ราคา(บาท)</th>
               <th>จำนวนรับเข้า</th>
               <th>จำนวนเบิกออก</th>
               <th>คงเหลือ</th>

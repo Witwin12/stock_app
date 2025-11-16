@@ -152,7 +152,7 @@ onMounted(() => {
               <DeleteButton
                 v-if="isAdmin"
                 :product-id="product.product_id"
-                endpoint-url="/api/tire-products/"
+                endpoint-url="/tire-products/"
                 :is-admin="isAdmin"
                 @delete-success="onProductDeleted"
               />
