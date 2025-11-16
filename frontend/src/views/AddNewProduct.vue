@@ -12,7 +12,8 @@
     size: '',
     year: new Date().getFullYear(),
     date: new Date().toISOString().split('T')[0],
-    quantity: 1
+    quantity: 1,
+    price: 0
   }
 
   // --- Form State ---
@@ -22,6 +23,7 @@
   const year_manufactured = ref(defaults.year)
   const date_in = ref(defaults.date)
   const quantity_in = ref(defaults.quantity)
+  const price = ref(defaults.price)
 
   const isLoading = ref(false)
   const errorMessage = ref(null)
@@ -30,14 +32,16 @@
   async function addNewProduct() {
     if (quantity_in.value <= 0)
       return (errorMessage.value = 'จำนวนรับเข้าต้องมากกว่า 0')
-
+    if (price.value < 0)
+      return (errorMessage.value = 'ราคาต้องไม่ติดลบ')
     const payload = {
       brand: brand.value,
       pattern: pattern.value,
       size: size.value,
       year_manufactured: +year_manufactured.value,
       date_in: date_in.value,
-      quantity_in: +quantity_in.value
+      quantity_in: +quantity_in.value,
+      price: +price.value
     }
 
     try {
@@ -64,6 +68,7 @@
       year_manufactured.value !== defaults.year ||
       date_in.value !== defaults.date ||
       quantity_in.value !== defaults.quantity
+      price.value !== defaults.price
 
     if (!isDirty || confirm('คุณแน่ใจหรือไม่ว่าจะออกโดยไม่บันทึก?'))
       router.push('/')
@@ -100,6 +105,10 @@
       <label>จำนวนรับเข้า</label>
       <input v-model.number="quantity_in" type="number" min="1" required />
      </div>
+      <div class="form-group">
+          <label>ราคา</label>
+          <input v-model.number="price" type="number" min="0" step="0.01" required />
+        </div>
     </fieldset>
 
          <div class="button-group">

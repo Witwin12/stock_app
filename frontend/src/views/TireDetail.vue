@@ -14,6 +14,19 @@ const loading = ref(true)
 const error = ref(null)
 const isLoggedIn = ref(false)
 
+// 1. เพิ่มฟังก์ชันจัดรูปแบบราคา
+function formatPrice(value) {
+  const price = parseFloat(value)
+  if (isNaN(price)) {
+    return '-'
+  }
+  // จัดรูปแบบเป็นเลขทศนิยม 2 ตำแหน่ง (เช่น 1200.50)
+  return price.toLocaleString('th-TH', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
+
 // --- ฟังก์ชันดึง Token + Headers ---
 function getAuthHeaders() {
   const token = localStorage.getItem('authToken')
@@ -41,7 +54,7 @@ async function fetchProductDetails() {
   } catch (err) {
     console.error('Error fetching product details:', err)
     if (err.response?.status === 401) {
-      error.value = "คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้ (401)"
+      error.value = 'คุณไม่มีสิทธิ์เข้าถึงข้อมูลนี้ (401)'
     } else {
       error.value = 'ไม่สามารถโหลดข้อมูลสินค้าได้'
     }
@@ -59,7 +72,7 @@ function checkLoginAndFetch() {
 
 // --- ฟังก์ชันเมื่อ Lot ถูกลบ ---
 function onLotDeleted(deletedLotId) {
-  stockLots.value = stockLots.value.filter(lot => lot.lot_id !== deletedLotId)
+  stockLots.value = stockLots.value.filter((lot) => lot.lot_id !== deletedLotId)
 }
 
 // --- ปุ่มย้อนกลับ ---
@@ -69,71 +82,68 @@ const goBack = () => router.back()
 onMounted(checkLoginAndFetch)
 </script>
 
-
-
 <template>
-   <div class="tire-detail-container"> 
-  <div v-if="loading">กำลังโหลดข้อมูล...</div>
+  <div class="tire-detail-container">
+    <div v-if="loading">กำลังโหลดข้อมูล...</div>
 
-  <div v-else-if="error" class="error-message">{{ error }}</div>
+    <div v-else-if="error" class="error-message">{{ error }}</div>
 
-  <template v-else-if="product">
-      
+    <template v-else-if="product">
       <div class="page-header">
         <div class="header-info">
-       <h1>{{ product.brand }} {{ product.pattern }}</h1>
-       <h2>ขนาด: {{ product.size }}</h2>
+          <h1>{{ product.brand }} {{ product.pattern }}</h1>
+          <h2>ขนาด: {{ product.size }}</h2>
         </div>
         <div class="header-actions">
           <button @click="$router.go(-1)" class="back-button">&larr; ย้อนกลับ</button>
         </div>
       </div>
 
-      
       <h3>รายละเอียดสต็อก</h3>
 
-   <div v-if="!stockLots.length" class="no-stock">
-    * ไม่พบข้อมูลสต็อก *
-   </div>
+      <div v-if="!stockLots.length" class="no-stock">* ไม่พบข้อมูลสต็อก *</div>
 
-   <div v-else class="table-scroll-container">
-    <table>
-     <thead>
-      <tr>
-       <th>ปีผลิต</th>
-       <th>วันที่รับเข้า</th>
-       <th>จำนวนรับเข้า</th>
-       <th>จำนวนเบิกออก</th>
-       <th>คงเหลือ</th>
-       <th v-if="isLoggedIn">การดำเนินการ</th>
-      </tr>
-     </thead>
-     <tbody>
-      <tr v-for="lot in stockLots" :key="lot.lot_id">
-       <td>{{ lot.year_manufactured }}</td>
-       <td>{{ lot.date_in }}</td>
-       <td class="right">{{ lot.quantity_in }}</td>
-       <td class="right">{{ lot.total_out }}</td>
-       <td class="right">
-        <strong>{{ lot.quantity_remaining }}</strong>
-       </td>
-       <td class="action-cell" v-if="isLoggedIn">
-        <RouterLink :to="`/stock-out-form/${lot.lot_id}`" class="stock-out-button">
-         เบิกออก
-        </RouterLink>
-        <LotDeleteButton
-         v-if="isLoggedIn"
-         :lot-id="lot.lot_id"
-         endpoint-url="/api/tire-lots/"
-         @delete-success="onLotDeleted"
-        />
-       </td>
-      </tr>
-     </tbody>
-    </table>
-   </div>
-  </template>
- </div>
+      <div v-else class="table-scroll-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ปีผลิต</th>
+              <th>วันที่รับเข้า</th>
+              <th>ราคาทุน</th>
+              <th>จำนวนรับเข้า</th>
+              <th>จำนวนเบิกออก</th>
+              <th>คงเหลือ</th>
+              <th v-if="isLoggedIn">การดำเนินการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="lot in stockLots" :key="lot.lot_id">
+              <td>{{ lot.year_manufactured }}</td>
+              <td>{{ lot.date_in }}</td>
+              
+              <td class="right">{{ formatPrice(lot.price) }}</td>
+              <td class="right">{{ lot.quantity_in }}</td>
+              <td class="right">{{ lot.total_out }}</td>
+              <td class="right">
+                <strong>{{ lot.quantity_remaining }}</strong>
+              </td>
+              <td class="action-cell" v-if="isLoggedIn">
+                <RouterLink :to="`/stock-out-form/${lot.lot_id}`" class="stock-out-button">
+                  เบิกออก
+                </RouterLink>
+                <LotDeleteButton
+                  v-if="isLoggedIn"
+                  :lot-id="lot.lot_id"
+                  endpoint-url="/api/tire-lots/"
+                  @delete-success="onLotDeleted"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
+  </div>
 </template>
 
 <style scoped>
