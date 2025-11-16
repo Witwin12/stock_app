@@ -3,6 +3,7 @@ from django.db.models import Sum
 from .tire_product import TireProduct 
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
+from decimal import Decimal
 
 class TireLot(models.Model):
     """
@@ -23,6 +24,12 @@ class TireLot(models.Model):
     date_in = models.DateField(verbose_name="วันที่รับเข้า")
     quantity_in = models.IntegerField(default=0, verbose_name="จำนวนรับเข้า")
     
+    price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=Decimal('0.00'), 
+        verbose_name="ราคา"
+    )
     is_active = models.BooleanField(
         default=True, 
         verbose_name="active",

@@ -21,6 +21,7 @@ class StockInSerializer(serializers.ModelSerializer):
             'year_manufactured',
             'date_in',
             'quantity_in',
+            'price',
             'is_active',
         ]
 
@@ -28,7 +29,10 @@ class StockInSerializer(serializers.ModelSerializer):
         if value <= 0:
             raise serializers.ValidationError("จำนวนที่รับเข้าต้องเป็นค่าบวก")
         return value
-
+    def validate_cost_price(self, value):
+        if value < 0:
+            raise serializers.ValidationError("ราคาต้องไม่ติดลบ")
+        return value
     def create(self, validated_data):
         product_data = {
             field: validated_data.pop(field)

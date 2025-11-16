@@ -24,6 +24,7 @@ class TireLotSerializer(serializers.ModelSerializer):
             'quantity_in',
             'total_out',          # (Output)
             'quantity_remaining', # (Output)
+            'price',
             'is_active'
         ]
         read_only_fields = ['lot_id']
